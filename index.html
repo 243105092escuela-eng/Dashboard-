@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DashHub — Login QR Google</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --accent:#1D9E75;--accent2:#7F77DD;--accent3:#D85A30;--accent4:#D4537E;--accent5:#378ADD;
+  --bg:#0f0f13;--bg2:#17171e;--bg3:#1e1e28;
+  --text:#e8e6f0;--text2:#9997a8;--border:rgba(255,255,255,0.07);
+  --sidebar-w:220px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+
+/* ====== LOGIN ====== */
+#login-screen{
+  position:fixed;inset:0;z-index:200;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity 0.5s ease;
+}
+#login-screen.out{opacity:0;pointer-events:none}
+
+.login-wrap{
+  display:flex;
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:24px;
+  overflow:hidden;
+  width:100%;max-width:780px;
+  min-height:480px;
+}
+
+/* LEFT panel */
+.login-left{
+  flex:1;
+  background:linear-gradient(160deg,#0f1a16 0%,#0d1320 60%,#150d1a 100%);
+  padding:44px 40px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+.left-glow{position:absolute;width:260px;height:260px;border-radius:50%;background:rgba(29,158,117,0.12);top:-60px;left:-60px;filter:blur(60px);pointer-events:none}
+.left-glow2{position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(127,119,221,0.1);bottom:-40px;right:-40px;filter:blur(50px);pointer-events:none}
+.brand{position:relative;z-index:1}
+.brand-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-1px;margin-bottom:10px}
+.brand-logo span{color:var(--accent)}
+.brand-tagline{font-size:13px;color:var(--text2);line-height:1.6}
+.features{position:relative;z-index:1;display:flex;flex-direction:column;gap:14px}
+.feature-row{display:flex;align-items:center;gap:12px}
+.feat-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.feat-text{font-size:13px;font-weight:500}
+.feat-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.left-footer{font-size:11px;color:rgba(255,255,255,0.2);position:relative;z-index:1}
+
+/* RIGHT panel */
+.login-right{
+  width:340px;flex-shrink:0;
+  padding:40px 36px;
+  display:flex;flex-direction:column;align-items:center;
+  border-left:1px solid var(--border);
+}
+.qr-heading{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;text-align:center;margin-bottom:4px}
+.qr-subheading{font-size:12px;color:var(--text2);text-align:center;margin-bottom:24px;line-height:1.5}
+
+.qr-box{
+  background:#fff;border-radius:18px;padding:14px;
+  width:184px;height:184px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;margin-bottom:20px;flex-shrink:0;
+}
+.qr-spinner{
+  position:absolute;inset:0;border-radius:18px;
+  background:rgba(255,255,255,0.92);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:8px;font-size:12px;color:#555;
+  transition:opacity 0.3s;
+}
+.qr-spinner.hidden{opacity:0;pointer-events:none}
+.spin-ring{width:28px;height:28px;border:2px solid #ddd;border-top-color:#1D9E75;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.status-badge{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 14px;border-radius:20px;
+  font-size:12px;font-weight:500;margin-bottom:20px;
+  transition:all 0.3s;
+}
+.status-badge.waiting{background:rgba(55,138,221,0.12);color:#5fa8e8;border:1px solid rgba(55,138,221,0.2)}
+.status-badge.scanning{background:rgba(251,188,5,0.12);color:#e8b830;border:1px solid rgba(251,188,5,0.2)}
+.status-badge.success{background:rgba(29,158,117,0.15);color:var(--accent);border:1px solid rgba(29,158,117,0.3)}
+.status-dot{width:7px;height:7px;border-radius:50%;animation:pulse 1.5s infinite}
+.waiting .status-dot{background:#378ADD}
+.scanning .status-dot{background:#e8b830}
+.success .status-dot{background:var(--accent);animation:none}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(55,138,221,0.4)}50%{box-shadow:0 0 0 5px rgba(55,138,221,0)}}
+
+.url-config{width:100%;margin-bottom:16px}
+.url-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:6px;display:block}
+.url-row{display:flex;gap:8px}
+.url-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'DM Sans';font-size:12px;outline:none;transition:border-color 0.15s}
+.url-input:focus{border-color:rgba(55,138,221,0.4)}
+.url-input::placeholder{color:var(--text2)}
+.btn-gen{background:var(--accent5);border:none;border-radius:8px;padding:8px 14px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans';transition:opacity 0.15s}
+.btn-gen:hover{opacity:0.85}
+
+.steps{display:flex;flex-direction:column;gap:8px;width:100%}
+.step{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:12px;transition:border-color 0.3s,background 0.3s}
+.step.done{border-color:rgba(29,158,117,0.3);background:rgba(29,158,117,0.05)}
+.step-num{width:20px;height:20px;border-radius:50%;background:rgba(55,138,221,0.15);color:var(--accent5);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;transition:all 0.3s}
+.step.done .step-num{background:rgba(29,158,117,0.2);color:var(--accent)}
+.step-txt{color:var(--text2);flex:1}
+.step-check{font-size:13px;color:var(--accent);opacity:0;transition:opacity 0.3s}
+.step.done .step-check{opacity:1}
+
+.btn-demo{
+  width:100%;margin-top:14px;
+  background:transparent;border:1px solid var(--border);border-radius:10px;padding:10px;
+  color:var(--text2);font-size:12px;font-family:'DM Sans';cursor:pointer;
+  transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-demo:hover{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.15);color:var(--text)}
+
+/* ====== DASHBOARD ====== */
+#dashboard{display:none;height:100vh;overflow:hidden}
+#dashboard.show{display:flex}
+
+aside{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;flex-shrink:0}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;padding:0 20px 16px;letter-spacing:-0.5px;color:var(--text);border-bottom:1px solid var(--border);margin-bottom:8px}
+.logo span{color:var(--accent)}
+.user-mini{display:flex;align-items:center;gap:8px;padding:10px 14px 14px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.user-mini-av{width:30px;height:30px;border-radius:50%;background:var(--bg3);font-size:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.user-mini-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.user-mini-info{flex:1;overflow:hidden}
+.user-mini-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-mini-email{font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logout-btn{font-size:11px;color:var(--accent3);cursor:pointer;background:none;border:none;font-family:'DM Sans';padding:2px;transition:opacity 0.15s}
+.logout-btn:hover{opacity:0.7}
+
+nav{flex:1;display:flex;flex-direction:column;gap:4px;padding:0 12px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;cursor:pointer;transition:background 0.18s,color 0.18s;font-size:13.5px;font-weight:500;color:var(--text2);border:1px solid transparent;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+.nav-item.active{color:var(--text);border-color:var(--border);background:var(--bg3)}
+.nav-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.nav-item[data-id="1"] .nav-icon{background:rgba(29,158,117,0.18)}
+.nav-item[data-id="2"] .nav-icon{background:rgba(127,119,221,0.18)}
+.nav-item[data-id="3"] .nav-icon{background:rgba(216,90,48,0.18)}
+.nav-item[data-id="4"] .nav-icon{background:rgba(212,83,126,0.18)}
+.nav-item[data-id="5"] .nav-icon{background:rgba(55,138,221,0.18)}
+.nav-item[data-id="1"].active .nav-icon{background:rgba(29,158,117,0.3)}
+.nav-item[data-id="2"].active .nav-icon{background:rgba(127,119,221,0.3)}
+.nav-item[data-id="3"].active .nav-icon{background:rgba(216,90,48,0.3)}
+.nav-item[data-id="4"].active .nav-icon{background:rgba(212,83,126,0.3)}
+.nav-item[data-id="5"].active .nav-icon{background:rgba(55,138,221,0.3)}
+.nav-item[data-id="1"].active{border-color:rgba(29,158,117,0.25)}
+.nav-item[data-id="2"].active{border-color:rgba(127,119,221,0.25)}
+.nav-item[data-id="3"].active{border-color:rgba(216,90,48,0.25)}
+.nav-item[data-id="4"].active{border-color:rgba(212,83,126,0.25)}
+.nav-item[data-id="5"].active{border-color:rgba(55,138,221,0.25)}
+.nav-dot{width:6px;height:6px;border-radius:50%;margin-left:auto;flex-shrink:0;opacity:0;transition:opacity 0.18s}
+.nav-item.active .nav-dot{opacity:1}
+.nav-item[data-id="1"] .nav-dot{background:var(--accent)}
+.nav-item[data-id="2"] .nav-dot{background:var(--accent2)}
+.nav-item[data-id="3"] .nav-dot{background:var(--accent3)}
+.nav-item[data-id="4"] .nav-dot{background:var(--accent4)}
+.nav-item[data-id="5"] .nav-dot{background:var(--accent5)}
+.sidebar-footer{padding:14px 20px 0;border-top:1px solid var(--border);margin-top:8px;font-size:11px;color:var(--text2)}
+
+main{flex:1;overflow:hidden;position:relative}
+.page{position:absolute;inset:0;padding:32px 36px;overflow-y:auto;opacity:0;pointer-events:none;transition:opacity 0.22s ease}
+.page.active{opacity:1;pointer-events:all}
+.page-header{margin-bottom:28px;display:flex;align-items:flex-start;gap:16px}
+.page-icon-lg{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.page-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.5px;line-height:1.1}
+.page-sub{font-size:13px;color:var(--text2);margin-top:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin-bottom:24px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px}
+.card-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.card-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:700}
+.card-note{font-size:12px;color:var(--text2);margin-top:4px}
+.section-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;margin-top:24px}
+
+/* Maps */
+.map-placeholder{background:var(--bg2);border:1px solid var(--border);border-radius:14px;height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;position:relative;overflow:hidden}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(29,158,117,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(29,158,117,0.05) 1px,transparent 1px);background-size:32px 32px}
+.pin{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(29,158,117,0.2)}
+.map-content{position:relative;z-index:1;text-align:center;color:var(--text2);font-size:14px}
+.museum-list{display:grid;gap:10px}
+.museum-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px}
+.museum-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.museum-name{font-weight:500;font-size:14px}
+.museum-addr{font-size:12px;color:var(--text2)}
+.museum-badge{margin-left:auto;font-size:11px;padding:3px 8px;border-radius:20px;background:rgba(29,158,117,0.15);color:var(--accent);flex-shrink:0}
+
+/* Social */
+.social-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.social-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:border-color 0.2s,transform 0.15s}
+.social-card:hover{transform:translateY(-2px)}
+.social-emoji{font-size:28px;margin-bottom:10px}
+.social-name{font-weight:600;font-size:14px;margin-bottom:4px}
+.social-handle{font-size:12px;color:var(--text2)}
+.social-card[data-s="ig"]{border-color:rgba(212,83,126,0.3)}
+.social-card[data-s="tw"]{border-color:rgba(55,138,221,0.3)}
+.social-card[data-s="yt"]{border-color:rgba(216,90,48,0.3)}
+.social-card[data-s="tk"]{border-color:rgba(127,119,221,0.3)}
+.social-card[data-s="li"]{border-color:rgba(29,158,117,0.3)}
+.feed{margin-top:20px;display:grid;gap:10px}
+.feed-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.feed-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.feed-user{font-weight:500;font-size:13px}
+.feed-text{font-size:13px;color:var(--text2);margin-top:2px}
+.feed-time{font-size:11px;color:var(--text2);margin-top:4px}
+
+/* Cart */
+.cart-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.cart-thumb{width:56px;height:56px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;background:var(--bg3)}
+.cart-info{flex:1}
+.cart-name{font-weight:500;font-size:14px}
+.cart-desc{font-size:12px;color:var(--text2);margin-top:2px}
+.cart-qty{display:flex;align-items:center;gap:8px;margin-top:8px}
+.qty-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+.qty-btn:hover{background:rgba(255,255,255,0.1)}
+.qty-num{font-size:13px;font-weight:500;min-width:20px;text-align:center}
+.cart-price{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--accent3);flex-shrink:0}
+.cart-summary{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;margin-top:16px}
+.summary-row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:10px;color:var(--text2)}
+.summary-total{display:flex;justify-content:space-between;font-size:16px;font-weight:600;color:var(--text);border-top:1px solid var(--border);padding-top:12px;margin-top:4px}
+.btn-checkout{width:100%;margin-top:14px;padding:12px;border-radius:10px;border:none;background:var(--accent3);color:white;font-family:'Syne',sans-serif;font-weight:600;font-size:15px;cursor:pointer;transition:opacity 0.15s}
+.btn-checkout:hover{opacity:0.85}
+
+/* Player */
+.player{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px;text-align:center}
+.player-cover{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,rgba(212,83,126,0.3),rgba(127,119,221,0.3));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:48px;border:2px solid var(--border);animation:spinA 8s linear infinite paused}
+.player-cover.playing{animation-play-state:running}
+@keyframes spinA{to{transform:rotate(360deg)}}
+.player-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700}
+.player-artist{font-size:13px;color:var(--text2);margin:4px 0 16px}
+.progress-bar{height:4px;background:var(--bg3);border-radius:2px;margin-bottom:8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;background:var(--accent4);width:35%;transition:width 0.5s linear}
+.progress-times{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:16px}
+.controls{display:flex;align-items:center;justify-content:center;gap:16px}
+.ctrl-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+.ctrl-btn:hover{background:rgba(255,255,255,0.1)}
+.ctrl-play{width:48px;height:48px;font-size:18px;background:var(--accent4);border-color:transparent;color:white}
+.ctrl-play:hover{opacity:0.85}
+.lofi-tracks{display:grid;gap:8px}
+.track-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:border-color 0.15s}
+.track-item:hover{border-color:rgba(212,83,126,0.3)}
+.track-item.playing-track{border-color:rgba(212,83,126,0.5);background:rgba(212,83,126,0.05)}
+.track-num{font-size:12px;color:var(--text2);width:20px;text-align:center}
+.track-info{flex:1}
+.track-name{font-size:14px;font-weight:500}
+.track-genre{font-size:12px;color:var(--text2)}
+.track-dur{font-size:12px;color:var(--text2)}
+
+/* Store */
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.product-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color 0.2s,transform 0.15s}
+.product-card:hover{transform:translateY(-3px);border-color:rgba(55,138,221,0.3)}
+.product-img{height:100px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:40px}
+.product-info{padding:12px}
+.product-name{font-size:13px;font-weight:500;margin-bottom:4px}
+.product-cat{font-size:11px;color:var(--text2);margin-bottom:8px}
+.product-footer{display:flex;align-items:center;justify-content:space-between}
+.product-price{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--accent5)}
+.add-btn{width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+.add-btn:hover{background:rgba(55,138,221,0.2);border-color:rgba(55,138,221,0.4)}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN SCREEN — QR + Google OAuth
+     ============================================================
+     INSTRUCCIONES PARA PRODUCCIÓN:
+     1. Reemplaza TU_CLIENT_ID en la función buildQR() con tu
+        Google OAuth 2.0 Client ID obtenido en:
+        https://console.cloud.google.com → APIs & Services → Credentials
+     2. Cambia REDIRECT_URI por la URL de tu backend que recibe
+        el callback de Google y emite el token al cliente.
+     3. Para el flujo QR real, tu backend debe notificar al cliente
+        vía WebSocket cuando el móvil complete el login.
+     ============================================================ -->
+<div id="login-screen">
+  <div class="login-wrap">
+
+    <!-- Panel izquierdo: Branding -->
+    <div class="login-left">
+      <div class="left-glow"></div>
+      <div class="left-glow2"></div>
+
+      <div class="brand">
+        <div class="brand-logo">Dash<span>Hub</span></div>
+        <div class="brand-tagline">Tu espacio de trabajo personal.<br>Accede de forma segura con tu cuenta Google.</div>
+      </div>
+
+      <div class="features">
+        <div class="feature-row">
+          <div class="feat-icon" style="background:rgba(29,158,117,0.15)">🗺️</div>
+          <div><div class="feat-text">Maps museos</div><div class="feat-sub">Explora cultura en tu ciudad</div></div>
+        </div>
+        <div class="feature-row">
+          <div class="feat-icon" style="background:rgba(127,119,221,0.15)">📡</div>
+          <div><div class="feat-text">Redes sociales</div><div class="feat-sub">Todo tu contenido unificado</div></div>
+        </div>
+        <div class="feature-row">
+          <div class="feat-icon" style="background:rgba(212,83,126,0.15)">🎵</div>
+          <div><div class="feat-text">Streaming LO-FI</div><div class="feat-sub">Música para concentrarte</div></div>
+        </div>
+        <div class="feature-row">
+          <div class="feat-icon" style="background:rgba(55,138,221,0.15)">🏪</div>
+          <div><div class="feat-text">Tienda Online</div><div class="feat-sub">Catálogo y ventas en tiempo real</div></div>
+        </div>
+      </div>
+
+      <div class="left-footer">DashHub © 2026 · Protegido con Google OAuth 2.0</div>
+    </div>
+
+    <!-- Panel derecho: QR Login -->
+    <div class="login-right">
+      <div class="qr-heading">Iniciar sesión</div>
+      <div class="qr-subheading">Escanea el QR con tu teléfono para<br>autenticarte con tu cuenta Google</div>
+
+      <!-- Caja del QR -->
+      <div class="qr-box">
+        <div id="qr-render"></div>
+        <div class="qr-spinner" id="qr-spinner">
+          <div class="spin-ring"></div>
+          <span>Generando QR…</span>
+        </div>
+      </div>
+
+      <!-- Estado del login -->
+      <div class="status-badge waiting" id="status-badge">
+        <div class="status-dot"></div>
+        <span id="status-text">Esperando escaneo…</span>
+      </div>
+
+      <!-- Campo para tu URL de OAuth -->
+      <div class="url-config">
+        <label class="url-label">URL de tu backend Google OAuth</label>
+        <div class="url-row">
+          <input class="url-input" type="text" id="oauth-url"
+            placeholder="https://tuapp.com/auth/google" />
+          <button class="btn-gen" onclick="buildQR()">QR</button>
+        </div>
+      </div>
+
+      <!-- Pasos del proceso -->
+      <div class="steps">
+        <div class="step" id="step1">
+          <div class="step-num">1</div>
+          <div class="step-txt">Abre la cámara de tu teléfono</div>
+          <div class="step-check">✓</div>
+        </div>
+        <div class="step" id="step2">
+          <div class="step-num">2</div>
+          <div class="step-txt">Escanea el código QR</div>
+          <div class="step-check">✓</div>
+        </div>
+        <div class="step" id="step3">
+          <div class="step-num">3</div>
+          <div class="step-txt">Inicia sesión con Google en tu móvil</div>
+          <div class="step-check">✓</div>
+        </div>
+      </div>
+
+      <!-- Botón demo -->
+      <button class="btn-demo" onclick="simulateLogin()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Simular login con Google (modo demo)
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     DASHBOARD
+     ============================================================ -->
+<div id="dashboard">
+  <aside>
+    <div class="logo">Dash<span>Hub</span></div>
+    <div class="user-mini">
+      <div class="user-mini-av" id="sb-av">👤</div>
+      <div class="user-mini-info">
+        <div class="user-mini-name" id="sb-name">Usuario</div>
+        <div class="user-mini-email" id="sb-email">—</div>
+      </div>
+      <button class="logout-btn" onclick="logout()">salir</button>
+    </div>
+    <nav>
+      <div class="nav-item active" data-id="1" onclick="goTo(1)">
+        <div class="nav-icon">🗺️</div><span>Maps museos</span><div class="nav-dot"></div>
+      </div>
+      <div class="nav-item" data-id="2" onclick="goTo(2)">
+        <div class="nav-icon">📡</div><span>Redes sociales</span><div class="nav-dot"></div>
+      </div>
+      <div class="nav-item" data-id="3" onclick="goTo(3)">
+        <div class="nav-icon">🛒</div><span>Carro de compras</span><div class="nav-dot"></div>
+      </div>
+      <div class="nav-item" data-id="4" onclick="goTo(4)">
+        <div class="nav-icon">🎵</div><span>Streaming LO-FI</span><div class="nav-dot"></div>
+      </div>
+      <div class="nav-item" data-id="5" onclick="goTo(5)">
+        <div class="nav-icon">🏪</div><span>Tienda Online</span><div class="nav-dot"></div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">v1.0 · DashHub</div>
+  </aside>
+
+  <main>
+    <!-- PAGE 1: MAPS MUSEOS -->
+    <div class="page active" id="page-1">
+      <div class="page-header">
+        <div class="page-icon-lg" style="background:rgba(29,158,117,0.15)">🗺️</div>
+        <div><div class="page-title">Maps museos</div><div class="page-sub">Explora museos cerca de ti</div></div>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="card-label">Museos encontrados</div><div class="card-value" style="color:var(--accent)">24</div><div class="card-note">En tu área</div></div>
+        <div class="card"><div class="card-label">Abiertos hoy</div><div class="card-value" style="color:#9FE1CB">18</div><div class="card-note">Hasta las 20:00</div></div>
+        <div class="card"><div class="card-label">Favoritos</div><div class="card-value">5</div><div class="card-note">Guardados</div></div>
+      </div>
+      <div class="map-placeholder">
+        <div class="map-grid"></div>
+        <div class="pin" style="top:30%;left:25%"></div>
+        <div class="pin" style="top:55%;left:60%;background:var(--accent2)"></div>
+        <div class="pin" style="top:40%;left:70%;background:var(--accent3)"></div>
+        <div class="pin" style="top:65%;left:35%"></div>
+        <div class="pin" style="top:25%;left:55%;background:var(--accent4)"></div>
+        <div class="map-content">
+          <div style="font-size:28px;margin-bottom:8px">📍</div>
+          <div style="font-weight:600;font-size:15px">Mapa Interactivo</div>
+          <div style="font-size:12px;margin-top:4px">Ciudad de México · Área metropolitana</div>
+        </div>
+      </div>
+      <div class="section-title">Museos destacados</div>
+      <div class="museum-list">
+        <div class="museum-item"><div class="museum-dot"></div><div><div class="museum-name">Museo Nacional de Antropología</div><div class="museum-addr">Paseo de la Reforma, Polanco</div></div><div class="museum-badge">Abierto</div></div>
+        <div class="museum-item"><div class="museum-dot" style="background:var(--accent2)"></div><div><div class="museum-name">Museo Frida Kahlo</div><div class="museum-addr">Londres 247, Coyoacán</div></div><div class="museum-badge" style="background:rgba(127,119,221,0.15);color:var(--accent2)">Abierto</div></div>
+        <div class="museum-item"><div class="museum-dot" style="background:var(--accent3)"></div><div><div class="museum-name">Museo Soumaya</div><div class="museum-addr">Miguel de Cervantes Saavedra</div></div><div class="museum-badge" style="background:rgba(216,90,48,0.15);color:var(--accent3)">Abierto</div></div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: REDES SOCIALES -->
+    <div class="page" id="page-2">
+      <div class="page-header">
+        <div class="page-icon-lg" style="background:rgba(127,119,221,0.15)">📡</div>
+        <div><div class="page-title">Redes sociales</div><div class="page-sub">Tus cuentas en un solo lugar</div></div>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="card-label">Seguidores totales</div><div class="card-value" style="color:var(--accent2)">48.2k</div><div class="card-note">+3.1% este mes</div></div>
+        <div class="card"><div class="card-label">Interacciones</div><div class="card-value">1.8k</div><div class="card-note">Últimas 24h</div></div>
+        <div class="card"><div class="card-label">Publicaciones</div><div class="card-value">12</div><div class="card-note">Esta semana</div></div>
+      </div>
+      <div class="section-title">Mis redes</div>
+      <div class="social-grid">
+        <div class="social-card" data-s="ig"><div class="social-emoji">📸</div><div class="social-name">Instagram</div><div class="social-handle">@usuario · 12.4k</div></div>
+        <div class="social-card" data-s="tw"><div class="social-emoji">🐦</div><div class="social-name">Twitter / X</div><div class="social-handle">@usuario · 8.9k</div></div>
+        <div class="social-card" data-s="yt"><div class="social-emoji">▶️</div><div class="social-name">YouTube</div><div class="social-handle">Mi Canal · 19.3k</div></div>
+        <div class="social-card" data-s="tk"><div class="social-emoji">🎭</div><div class="social-name">TikTok</div><div class="social-handle">@usuario · 5.1k</div></div>
+        <div class="social-card" data-s="li"><div class="social-emoji">💼</div><div class="social-name">LinkedIn</div><div class="social-handle">Mi perfil · 2.5k</div></div>
+      </div>
+      <div class="section-title">Feed reciente</div>
+      <div class="feed">
+        <div class="feed-item"><div class="feed-avatar" style="background:rgba(212,83,126,0.2)">📸</div><div><div class="feed-user">Instagram · Nueva publicación</div><div class="feed-text">Tu foto recibió 340 likes en la última hora</div><div class="feed-time">Hace 23 min</div></div></div>
+        <div class="feed-item"><div class="feed-avatar" style="background:rgba(55,138,221,0.2)">🐦</div><div><div class="feed-user">Twitter · Mención</div><div class="feed-text">@designmx mencionó tu tweet sobre tendencias</div><div class="feed-time">Hace 1h</div></div></div>
+        <div class="feed-item"><div class="feed-avatar" style="background:rgba(216,90,48,0.2)">▶️</div><div><div class="feed-user">YouTube · Comentario nuevo</div><div class="feed-text">"Excelente contenido, muy bien explicado"</div><div class="feed-time">Hace 3h</div></div></div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: CARRO DE COMPRAS -->
+    <div class="page" id="page-3">
+      <div class="page-header">
+        <div class="page-icon-lg" style="background:rgba(216,90,48,0.15)">🛒</div>
+        <div><div class="page-title">Carro de compras</div><div class="page-sub">3 artículos en tu carrito</div></div>
+      </div>
+      <div class="section-title">Artículos</div>
+      <div class="cart-item">
+        <div class="cart-thumb">🎧</div>
+        <div class="cart-info"><div class="cart-name">Audífonos Inalámbricos Pro</div><div class="cart-desc">Negro · Bluetooth 5.0</div>
+          <div class="cart-qty"><button class="qty-btn" onclick="changeQty(0,-1)">−</button><div class="qty-num" id="qty-0">1</div><button class="qty-btn" onclick="changeQty(0,1)">+</button></div>
+        </div>
+        <div class="cart-price" id="price-0">$89</div>
+      </div>
+      <div class="cart-item">
+        <div class="cart-thumb">⌨️</div>
+        <div class="cart-info"><div class="cart-name">Teclado Mecánico RGB</div><div class="cart-desc">Blanco · Cherry MX Red</div>
+          <div class="cart-qty"><button class="qty-btn" onclick="changeQty(1,-1)">−</button><div class="qty-num" id="qty-1">1</div><button class="qty-btn" onclick="changeQty(1,1)">+</button></div>
+        </div>
+        <div class="cart-price" id="price-1">$120</div>
+      </div>
+      <div class="cart-item">
+        <div class="cart-thumb">🖱️</div>
+        <div class="cart-info"><div class="cart-name">Mouse Ergonómico Silent</div><div class="cart-desc">Gris · Inalámbrico</div>
+          <div class="cart-qty"><button class="qty-btn" onclick="changeQty(2,-1)">−</button><div class="qty-num" id="qty-2">2</div><button class="qty-btn" onclick="changeQty(2,1)">+</button></div>
+        </div>
+        <div class="cart-price" id="price-2">$74</div>
+      </div>
+      <div class="cart-summary">
+        <div class="summary-row"><span>Subtotal</span><span id="subtotal">$283</span></div>
+        <div class="summary-row"><span>Envío</span><span>$12</span></div>
+        <div class="summary-row"><span>Descuento (10%)</span><span style="color:var(--accent)">−$28</span></div>
+        <div class="summary-total"><span>Total</span><span id="total">$267</span></div>
+        <button class="btn-checkout">Proceder al pago →</button>
+      </div>
+    </div>
+
+    <!-- PAGE 4: STREAMING LO-FI -->
+    <div class="page" id="page-4">
+      <div class="page-header">
+        <div class="page-icon-lg" style="background:rgba(212,83,126,0.15)">🎵</div>
+        <div><div class="page-title">Streaming LO-FI</div><div class="page-sub">Beats para concentrarte y relajarte</div></div>
+      </div>
+      <div class="player">
+        <div class="player-cover" id="player-cover">🎧</div>
+        <div class="player-title" id="player-track-name">Midnight Coffee</div>
+        <div class="player-artist" id="player-track-artist">ChillWave Studio · Lo-fi Beats</div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+        <div class="progress-times"><span id="prog-cur">1:24</span><span id="prog-dur">3:52</span></div>
+        <div class="controls">
+          <button class="ctrl-btn" onclick="prevTrack()">⏮</button>
+          <button class="ctrl-btn ctrl-play" id="play-btn" onclick="togglePlay()">▶</button>
+          <button class="ctrl-btn" onclick="nextTrack()">⏭</button>
+        </div>
+      </div>
+      <div class="section-title">Lista de reproducción</div>
+      <div class="lofi-tracks">
+        <div class="track-item playing-track" data-t="0" onclick="selectTrack(0)"><div class="track-num">♪</div><div class="track-info"><div class="track-name">Midnight Coffee</div><div class="track-genre">Chill · Study</div></div><div class="track-dur">3:52</div></div>
+        <div class="track-item" data-t="1" onclick="selectTrack(1)"><div class="track-num">2</div><div class="track-info"><div class="track-name">Rainy Window</div><div class="track-genre">Ambient · Relax</div></div><div class="track-dur">4:15</div></div>
+        <div class="track-item" data-t="2" onclick="selectTrack(2)"><div class="track-num">3</div><div class="track-info"><div class="track-name">Tokyo Afternoons</div><div class="track-genre">Jazz · Lo-fi</div></div><div class="track-dur">3:30</div></div>
+        <div class="track-item" data-t="3" onclick="selectTrack(3)"><div class="track-num">4</div><div class="track-info"><div class="track-name">Late Night Drive</div><div class="track-genre">Dreamy · Chill</div></div><div class="track-dur">5:01</div></div>
+        <div class="track-item" data-t="4" onclick="selectTrack(4)"><div class="track-num">5</div><div class="track-info"><div class="track-name">Study Session 3am</div><div class="track-genre">Focus · Beats</div></div><div class="track-dur">4:44</div></div>
+      </div>
+    </div>
+
+    <!-- PAGE 5: TIENDA ONLINE -->
+    <div class="page" id="page-5">
+      <div class="page-header">
+        <div class="page-icon-lg" style="background:rgba(55,138,221,0.15)">🏪</div>
+        <div><div class="page-title">Tienda Online</div><div class="page-sub">Los mejores productos para ti</div></div>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="card-label">Productos</div><div class="card-value" style="color:var(--accent5)">156</div><div class="card-note">En catálogo</div></div>
+        <div class="card"><div class="card-label">Ventas hoy</div><div class="card-value">34</div><div class="card-note">+12% vs ayer</div></div>
+        <div class="card"><div class="card-label">Ingresos</div><div class="card-value" style="color:var(--accent)">$4.2k</div><div class="card-note">Este mes</div></div>
+      </div>
+      <div class="section-title">Catálogo destacado</div>
+      <div class="store-grid">
+        <div class="product-card"><div class="product-img">💻</div><div class="product-info"><div class="product-name">Laptop Ultrabook</div><div class="product-cat">Electrónica</div><div class="product-footer"><div class="product-price">$1,299</div><button class="add-btn">+</button></div></div></div>
+        <div class="product-card"><div class="product-img">📱</div><div class="product-info"><div class="product-name">Smartphone X Pro</div><div class="product-cat">Móviles</div><div class="product-footer"><div class="product-price">$899</div><button class="add-btn">+</button></div></div></div>
+        <div class="product-card"><div class="product-img">⌚</div><div class="product-info"><div class="product-name">Smartwatch Ultra</div><div class="product-cat">Wearables</div><div class="product-footer"><div class="product-price">$349</div><button class="add-btn">+</button></div></div></div>
+        <div class="product-card"><div class="product-img">🎮</div><div class="product-info"><div class="product-name">Control Gaming</div><div class="product-cat">Gaming</div><div class="product-footer"><div class="product-price">$79</div><button class="add-btn">+</button></div></div></div>
+        <div class="product-card"><div class="product-img">📷</div><div class="product-info"><div class="product-name">Cámara Mirrorless</div><div class="product-cat">Fotografía</div><div class="product-footer"><div class="product-price">$1,050</div><button class="add-btn">+</button></div></div></div>
+        <div class="product-card"><div class="product-img">🔊</div><div class="product-info"><div class="product-name">Bocina Bluetooth</div><div class="product-cat">Audio</div><div class="product-footer"><div class="product-price">$129</div><button class="add-btn">+</button></div></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   QR LOGIN — Google OAuth
+   ============================================================
+   PARA PRODUCCIÓN:
+   - Reemplaza TU_CLIENT_ID con el tuyo de Google Cloud Console
+   - Reemplaza https://tuapp.com/auth/callback con tu redirect_uri real
+   - Tu backend debe recibir el code de Google y notificar al
+     cliente (vía WebSocket o polling) para hacer el login automático
+   ============================================================ */
+
+const GOOGLE_CLIENT_ID = 'TU_CLIENT_ID'; // <-- CAMBIA ESTO
+const REDIRECT_URI     = 'https://tuapp.com/auth/callback'; // <-- CAMBIA ESTO
+
+function buildQR() {
+  // Si el usuario puso su propia URL, úsala; si no, genera la URL estándar de Google OAuth
+  const customUrl = document.getElementById('oauth-url').value.trim();
+  const oauthUrl = customUrl.length > 5
+    ? customUrl
+    : 'https://accounts.google.com/o/oauth2/v2/auth'
+      + '?client_id=' + GOOGLE_CLIENT_ID
+      + '&redirect_uri=' + encodeURIComponent(REDIRECT_URI)
+      + '&response_type=code'
+      + '&scope=' + encodeURIComponent('openid email profile')
+      + '&prompt=select_account';
+
+  document.getElementById('qr-render').innerHTML = '';
+  document.getElementById('qr-spinner').classList.remove('hidden');
+
+  setTimeout(() => {
+    new QRCode(document.getElementById('qr-render'), {
+      text: oauthUrl,
+      width: 156,
+      height: 156,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    document.getElementById('qr-spinner').classList.add('hidden');
+  }, 600);
+}
+
+// Generar QR automáticamente al cargar la página
+window.addEventListener('load', buildQR);
+
+/* ---- Simular flujo de escaneo (DEMO) ---- */
+let simTimer;
+function simulateLogin() {
+  clearTimeout(simTimer);
+  setBadge('scanning', 'Escaneando QR…');
+  document.getElementById('step1').classList.add('done');
+
+  simTimer = setTimeout(() => {
+    document.getElementById('step2').classList.add('done');
+    setBadge('scanning', 'Autenticando con Google…');
+
+    simTimer = setTimeout(() => {
+      document.getElementById('step3').classList.add('done');
+      setBadge('success', '¡Sesión iniciada!');
+
+      simTimer = setTimeout(() => {
+        enterDashboard('Usuario Demo', 'demo@gmail.com');
+      }, 700);
+    }, 1200);
+  }, 1200);
+}
+
+function setBadge(cls, txt) {
+  const b = document.getElementById('status-badge');
+  b.className = 'status-badge ' + cls;
+  document.getElementById('status-text').textContent = txt;
+}
+
+/* ---- Entrar al dashboard ---- */
+function enterDashboard(name, email) {
+  document.getElementById('sb-name').textContent = name.split(' ')[0];
+  document.getElementById('sb-email').textContent = email;
+  document.getElementById('login-screen').classList.add('out');
+  setTimeout(() => {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').classList.add('show');
+  }, 500);
+}
+
+/* ---- Cerrar sesión ---- */
+function logout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  setTimeout(() => document.getElementById('login-screen').classList.remove('out'), 10);
+  document.getElementById('dashboard').classList.remove('show');
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('done'));
+  setBadge('waiting', 'Esperando escaneo…');
+  buildQR();
+}
+
+/* ---- Navegación del dashboard ---- */
+function goTo(id) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector('.nav-item[data-id="' + id + '"]').classList.add('active');
+  document.getElementById('page-' + id).classList.add('active');
+}
+
+/* ---- Carrito de compras ---- */
+const prices = [89, 120, 37];
+const qtys   = [1, 1, 2];
+
+function changeQty(idx, d) {
+  qtys[idx] = Math.max(1, qtys[idx] + d);
+  document.getElementById('qty-' + idx).textContent = qtys[idx];
+  document.getElementById('price-' + idx).textContent = '$' + (prices[idx] * qtys[idx]);
+  const sub = qtys.reduce((s, q, i) => s + q * prices[i], 0);
+  document.getElementById('subtotal').textContent = '$' + sub;
+  document.getElementById('total').textContent = '$' + Math.round(sub * 0.9 + 12);
+}
+
+/* ---- Reproductor LO-FI ---- */
+const tracks = [
+  { name: 'Midnight Coffee',   artist: 'ChillWave Studio', dur: '3:52', icon: '🎧' },
+  { name: 'Rainy Window',      artist: 'Ambient Dreams',   dur: '4:15', icon: '🌧️' },
+  { name: 'Tokyo Afternoons',  artist: 'Jazz Lofi',        dur: '3:30', icon: '🌸' },
+  { name: 'Late Night Drive',  artist: 'Dreamy Beats',     dur: '5:01', icon: '🌙' },
+  { name: 'Study Session 3am', artist: 'Focus Flow',       dur: '4:44', icon: '📚' },
+];
+let currentTrack = 0, playing = false, progVal = 35, progTimer;
+
+function selectTrack(i) {
+  currentTrack = i;
+  document.querySelectorAll('.track-item').forEach((el, idx) => {
+    el.classList.toggle('playing-track', idx === i);
+    el.querySelector('.track-num').textContent = idx === i ? '♪' : (idx + 1);
+  });
+  const t = tracks[i];
+  document.getElementById('player-track-name').textContent   = t.name;
+  document.getElementById('player-track-artist').textContent = t.artist + ' · Lo-fi Beats';
+  document.getElementById('prog-dur').textContent = t.dur;
+  document.getElementById('player-cover').textContent = t.icon;
+  progVal = 0;
+  document.getElementById('prog-fill').style.width = '0%';
+  document.getElementById('prog-cur').textContent = '0:00';
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('play-btn').textContent = playing ? '⏸' : '▶';
+  document.getElementById('player-cover').classList.toggle('playing', playing);
+  if (playing) {
+    progTimer = setInterval(() => {
+      progVal = Math.min(progVal + 0.3, 100);
+      document.getElementById('prog-fill').style.width = progVal + '%';
+      const secs = Math.round(progVal / 100 * 232);
+      const m = Math.floor(secs / 60), s = secs % 60;
+      document.getElementById('prog-cur').textContent = m + ':' + String(s).padStart(2, '0');
+      if (progVal >= 100) { clearInterval(progTimer); nextTrack(); }
+    }, 300);
+  } else {
+    clearInterval(progTimer);
+  }
+}
+
+function nextTrack() { selectTrack((currentTrack + 1) % tracks.length); if (playing) { playing = false; togglePlay(); } }
+function prevTrack() { selectTrack((currentTrack - 1 + tracks.length) % tracks.length); }
+</script>
+</body>
+</html>
