@@ -268,6 +268,24 @@ main{flex:1;overflow:hidden;position:relative}
 .product-price{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--accent5)}
 .add-btn{width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
 .add-btn:hover{background:rgba(55,138,221,0.2);border-color:rgba(55,138,221,0.4)}
+
+/* ---- Páginas con iframe ---- */
+.iframe-page{padding:24px 28px 0}
+.iframe-page .page-header{margin-bottom:16px}
+.iframe-wrap{
+  flex:1;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  background:var(--bg2);
+  height:calc(100vh - 130px);
+}
+.iframe-wrap iframe{
+  width:100%;
+  height:100%;
+  border:none;
+  display:block;
+}
 </style>
 </head>
 <body>
@@ -419,61 +437,34 @@ main{flex:1;overflow:hidden;position:relative}
 
   <main>
     <!-- PAGE 1: MAPS MUSEOS -->
-    <div class="page active" id="page-1">
+    <div class="page iframe-page active" id="page-1">
       <div class="page-header">
         <div class="page-icon-lg" style="background:rgba(29,158,117,0.15)">🗺️</div>
         <div><div class="page-title">Maps museos</div><div class="page-sub">Explora museos cerca de ti</div></div>
       </div>
-      <div class="cards">
-        <div class="card"><div class="card-label">Museos encontrados</div><div class="card-value" style="color:var(--accent)">24</div><div class="card-note">En tu área</div></div>
-        <div class="card"><div class="card-label">Abiertos hoy</div><div class="card-value" style="color:#9FE1CB">18</div><div class="card-note">Hasta las 20:00</div></div>
-        <div class="card"><div class="card-label">Favoritos</div><div class="card-value">5</div><div class="card-note">Guardados</div></div>
-      </div>
-      <div class="map-placeholder">
-        <div class="map-grid"></div>
-        <div class="pin" style="top:30%;left:25%"></div>
-        <div class="pin" style="top:55%;left:60%;background:var(--accent2)"></div>
-        <div class="pin" style="top:40%;left:70%;background:var(--accent3)"></div>
-        <div class="pin" style="top:65%;left:35%"></div>
-        <div class="pin" style="top:25%;left:55%;background:var(--accent4)"></div>
-        <div class="map-content">
-          <div style="font-size:28px;margin-bottom:8px">📍</div>
-          <div style="font-weight:600;font-size:15px">Mapa Interactivo</div>
-          <div style="font-size:12px;margin-top:4px">Ciudad de México · Área metropolitana</div>
-        </div>
-      </div>
-      <div class="section-title">Museos destacados</div>
-      <div class="museum-list">
-        <div class="museum-item"><div class="museum-dot"></div><div><div class="museum-name">Museo Nacional de Antropología</div><div class="museum-addr">Paseo de la Reforma, Polanco</div></div><div class="museum-badge">Abierto</div></div>
-        <div class="museum-item"><div class="museum-dot" style="background:var(--accent2)"></div><div><div class="museum-name">Museo Frida Kahlo</div><div class="museum-addr">Londres 247, Coyoacán</div></div><div class="museum-badge" style="background:rgba(127,119,221,0.15);color:var(--accent2)">Abierto</div></div>
-        <div class="museum-item"><div class="museum-dot" style="background:var(--accent3)"></div><div><div class="museum-name">Museo Soumaya</div><div class="museum-addr">Miguel de Cervantes Saavedra</div></div><div class="museum-badge" style="background:rgba(216,90,48,0.15);color:var(--accent3)">Abierto</div></div>
+      <div class="iframe-wrap">
+        <iframe
+          src="https://243105092escuela-eng.github.io/localizador/"
+          title="Localizador de Museos"
+          allowfullscreen
+          loading="lazy">
+        </iframe>
       </div>
     </div>
 
     <!-- PAGE 2: REDES SOCIALES -->
-    <div class="page" id="page-2">
+    <div class="page iframe-page" id="page-2">
       <div class="page-header">
         <div class="page-icon-lg" style="background:rgba(127,119,221,0.15)">📡</div>
         <div><div class="page-title">Redes sociales</div><div class="page-sub">Tus cuentas en un solo lugar</div></div>
       </div>
-      <div class="cards">
-        <div class="card"><div class="card-label">Seguidores totales</div><div class="card-value" style="color:var(--accent2)">48.2k</div><div class="card-note">+3.1% este mes</div></div>
-        <div class="card"><div class="card-label">Interacciones</div><div class="card-value">1.8k</div><div class="card-note">Últimas 24h</div></div>
-        <div class="card"><div class="card-label">Publicaciones</div><div class="card-value">12</div><div class="card-note">Esta semana</div></div>
-      </div>
-      <div class="section-title">Mis redes</div>
-      <div class="social-grid">
-        <div class="social-card" data-s="ig"><div class="social-emoji">📸</div><div class="social-name">Instagram</div><div class="social-handle">@usuario · 12.4k</div></div>
-        <div class="social-card" data-s="tw"><div class="social-emoji">🐦</div><div class="social-name">Twitter / X</div><div class="social-handle">@usuario · 8.9k</div></div>
-        <div class="social-card" data-s="yt"><div class="social-emoji">▶️</div><div class="social-name">YouTube</div><div class="social-handle">Mi Canal · 19.3k</div></div>
-        <div class="social-card" data-s="tk"><div class="social-emoji">🎭</div><div class="social-name">TikTok</div><div class="social-handle">@usuario · 5.1k</div></div>
-        <div class="social-card" data-s="li"><div class="social-emoji">💼</div><div class="social-name">LinkedIn</div><div class="social-handle">Mi perfil · 2.5k</div></div>
-      </div>
-      <div class="section-title">Feed reciente</div>
-      <div class="feed">
-        <div class="feed-item"><div class="feed-avatar" style="background:rgba(212,83,126,0.2)">📸</div><div><div class="feed-user">Instagram · Nueva publicación</div><div class="feed-text">Tu foto recibió 340 likes en la última hora</div><div class="feed-time">Hace 23 min</div></div></div>
-        <div class="feed-item"><div class="feed-avatar" style="background:rgba(55,138,221,0.2)">🐦</div><div><div class="feed-user">Twitter · Mención</div><div class="feed-text">@designmx mencionó tu tweet sobre tendencias</div><div class="feed-time">Hace 1h</div></div></div>
-        <div class="feed-item"><div class="feed-avatar" style="background:rgba(216,90,48,0.2)">▶️</div><div><div class="feed-user">YouTube · Comentario nuevo</div><div class="feed-text">"Excelente contenido, muy bien explicado"</div><div class="feed-time">Hace 3h</div></div></div>
+      <div class="iframe-wrap">
+        <iframe
+          src="https://243105092escuela-eng.github.io/Redes_sociales/"
+          title="Redes Sociales"
+          allowfullscreen
+          loading="lazy">
+        </iframe>
       </div>
     </div>
 
