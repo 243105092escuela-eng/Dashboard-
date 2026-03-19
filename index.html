@@ -506,52 +506,35 @@ main{flex:1;overflow:hidden;position:relative}
     </div>
 
     <!-- PAGE 4: STREAMING LO-FI -->
-    <div class="page" id="page-4">
+    <div class="page iframe-page" id="page-4">
       <div class="page-header">
         <div class="page-icon-lg" style="background:rgba(212,83,126,0.15)">🎵</div>
         <div><div class="page-title">Streaming LO-FI</div><div class="page-sub">Beats para concentrarte y relajarte</div></div>
       </div>
-      <div class="player">
-        <div class="player-cover" id="player-cover">🎧</div>
-        <div class="player-title" id="player-track-name">Midnight Coffee</div>
-        <div class="player-artist" id="player-track-artist">ChillWave Studio · Lo-fi Beats</div>
-        <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
-        <div class="progress-times"><span id="prog-cur">1:24</span><span id="prog-dur">3:52</span></div>
-        <div class="controls">
-          <button class="ctrl-btn" onclick="prevTrack()">⏮</button>
-          <button class="ctrl-btn ctrl-play" id="play-btn" onclick="togglePlay()">▶</button>
-          <button class="ctrl-btn" onclick="nextTrack()">⏭</button>
-        </div>
-      </div>
-      <div class="section-title">Lista de reproducción</div>
-      <div class="lofi-tracks">
-        <div class="track-item playing-track" data-t="0" onclick="selectTrack(0)"><div class="track-num">♪</div><div class="track-info"><div class="track-name">Midnight Coffee</div><div class="track-genre">Chill · Study</div></div><div class="track-dur">3:52</div></div>
-        <div class="track-item" data-t="1" onclick="selectTrack(1)"><div class="track-num">2</div><div class="track-info"><div class="track-name">Rainy Window</div><div class="track-genre">Ambient · Relax</div></div><div class="track-dur">4:15</div></div>
-        <div class="track-item" data-t="2" onclick="selectTrack(2)"><div class="track-num">3</div><div class="track-info"><div class="track-name">Tokyo Afternoons</div><div class="track-genre">Jazz · Lo-fi</div></div><div class="track-dur">3:30</div></div>
-        <div class="track-item" data-t="3" onclick="selectTrack(3)"><div class="track-num">4</div><div class="track-info"><div class="track-name">Late Night Drive</div><div class="track-genre">Dreamy · Chill</div></div><div class="track-dur">5:01</div></div>
-        <div class="track-item" data-t="4" onclick="selectTrack(4)"><div class="track-num">5</div><div class="track-info"><div class="track-name">Study Session 3am</div><div class="track-genre">Focus · Beats</div></div><div class="track-dur">4:44</div></div>
+      <div class="iframe-wrap">
+        <iframe
+          src="http://dst.rf.gd/?i=1"
+          title="Streaming LO-FI"
+          allowfullscreen
+          allow="autoplay; encrypted-media"
+          loading="lazy">
+        </iframe>
       </div>
     </div>
 
     <!-- PAGE 5: TIENDA ONLINE -->
-    <div class="page" id="page-5">
+    <div class="page iframe-page" id="page-5">
       <div class="page-header">
         <div class="page-icon-lg" style="background:rgba(55,138,221,0.15)">🏪</div>
         <div><div class="page-title">Tienda Online</div><div class="page-sub">Los mejores productos para ti</div></div>
       </div>
-      <div class="cards">
-        <div class="card"><div class="card-label">Productos</div><div class="card-value" style="color:var(--accent5)">156</div><div class="card-note">En catálogo</div></div>
-        <div class="card"><div class="card-label">Ventas hoy</div><div class="card-value">34</div><div class="card-note">+12% vs ayer</div></div>
-        <div class="card"><div class="card-label">Ingresos</div><div class="card-value" style="color:var(--accent)">$4.2k</div><div class="card-note">Este mes</div></div>
-      </div>
-      <div class="section-title">Catálogo destacado</div>
-      <div class="store-grid">
-        <div class="product-card"><div class="product-img">💻</div><div class="product-info"><div class="product-name">Laptop Ultrabook</div><div class="product-cat">Electrónica</div><div class="product-footer"><div class="product-price">$1,299</div><button class="add-btn">+</button></div></div></div>
-        <div class="product-card"><div class="product-img">📱</div><div class="product-info"><div class="product-name">Smartphone X Pro</div><div class="product-cat">Móviles</div><div class="product-footer"><div class="product-price">$899</div><button class="add-btn">+</button></div></div></div>
-        <div class="product-card"><div class="product-img">⌚</div><div class="product-info"><div class="product-name">Smartwatch Ultra</div><div class="product-cat">Wearables</div><div class="product-footer"><div class="product-price">$349</div><button class="add-btn">+</button></div></div></div>
-        <div class="product-card"><div class="product-img">🎮</div><div class="product-info"><div class="product-name">Control Gaming</div><div class="product-cat">Gaming</div><div class="product-footer"><div class="product-price">$79</div><button class="add-btn">+</button></div></div></div>
-        <div class="product-card"><div class="product-img">📷</div><div class="product-info"><div class="product-name">Cámara Mirrorless</div><div class="product-cat">Fotografía</div><div class="product-footer"><div class="product-price">$1,050</div><button class="add-btn">+</button></div></div></div>
-        <div class="product-card"><div class="product-img">🔊</div><div class="product-info"><div class="product-name">Bocina Bluetooth</div><div class="product-cat">Audio</div><div class="product-footer"><div class="product-price">$129</div><button class="add-btn">+</button></div></div></div>
+      <div class="iframe-wrap">
+        <iframe
+          src="https://tiendaonlines.free.nf/?i=1"
+          title="Tienda Online"
+          allowfullscreen
+          loading="lazy">
+        </iframe>
       </div>
     </div>
   </main>
