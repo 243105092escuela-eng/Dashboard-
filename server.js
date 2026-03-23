@@ -61,7 +61,42 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'DashHub TOTP Server' });
 });
 
-// ── Ruta 2: QR de configuración para Google Authenticator ─────
+// ── Ruta 2: QR como JSON para el dashboard ───────────────────
+app.get('/setup-qr', async (req, res) => {
+  try {
+    const otpauthUrl = speakeasy.otpauthURL({
+      secret:   TOTP_SECRET,
+      label:    encodeURIComponent(APP_USER),
+      issuer:   APP_NAME,
+      encoding: 'base32',
+    });
+    const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
+    res.json({ qr: qrDataUrl });
+  } catch (err) {
+    res.status(500).json({ error: 'Error generando QR' });
+  }
+});
+
+// ── Estado de escaneo ─────────────────────────────────────────
+let qrScanned = false;
+
+// ── Ruta 3: Authenticator escanea — activa la vista de código ─
+app.get('/setup-scanned', (req, res) => {
+  qrScanned = true;
+  notifyDashboard({ type: 'QR_SCANNED' });
+  res.json({ ok: true });
+});
+
+// ── Ruta 4: Polling — dashboard pregunta si ya se escaneó ─────
+app.get('/check-scanned', (req, res) => {
+  if (qrScanned) {
+    qrScanned = false; // reset para la próxima sesión
+    return res.json({ scanned: true });
+  }
+  res.json({ scanned: false });
+});
+
+// ── Ruta 5: QR de configuración como página HTML ─────────────
 // Abre esta URL UNA SOLA VEZ para vincular Google Authenticator
 app.get('/setup', async (req, res) => {
   try {
@@ -140,6 +175,7 @@ app.post('/auth/verify', (req, res) => {
 
   if (valid) {
     console.log('[TOTP] Login exitoso');
+    qrScanned = false; // reset
     notifyDashboard({ type: 'LOGIN_OK', name: name || 'Usuario', email: APP_USER });
     return res.json({ ok: true });
   } else {
