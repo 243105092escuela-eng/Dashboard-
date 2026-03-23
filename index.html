@@ -407,9 +407,14 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
           </div>
           <div class="step">
             <div class="step-num">3</div>
-            <div class="step-txt">Apunta al QR — el código aparece automáticamente</div>
+            <div class="step-txt">Apunta al QR de arriba</div>
           </div>
         </div>
+
+        <button class="btn-gen" onclick="mostrarVista('login')"
+          style="width:100%;padding:12px;border-radius:10px;font-size:14px;margin-top:8px">
+          Ya escaneé el QR →
+        </button>
       </div>
 
       <!-- ── VISTA 2: Ingresar código TOTP (aparece automáticamente) ── -->
@@ -726,8 +731,6 @@ function mostrarVista(vista) {
 }
 
 /* ── Cargar QR desde el servidor ────────────────────────────── */
-let pollingTimer = null;
-
 async function cargarQRSetup() {
   try {
     const res  = await fetch(`${SERVER_URL}/setup-qr`);
@@ -736,27 +739,10 @@ async function cargarQRSetup() {
     img.src    = data.qr;
     img.style.display = 'block';
     document.getElementById('setup-spinner').classList.add('hidden');
-    // Iniciar polling — cuando Authenticator escanea el QR
-    // el servidor recibe la primera verificación y notifica via WS
-    iniciarPollingEscaneo();
   } catch (err) {
     document.getElementById('setup-spinner').innerHTML =
       '<span style="color:#e07a5a;font-size:11px">Sin conexión al servidor</span>';
   }
-}
-
-function iniciarPollingEscaneo() {
-  clearInterval(pollingTimer);
-  pollingTimer = setInterval(async () => {
-    try {
-      const res  = await fetch(`${SERVER_URL}/check-scanned`);
-      const data = await res.json();
-      if (data.scanned) {
-        clearInterval(pollingTimer);
-        mostrarVista('login');
-      }
-    } catch (_) {}
-  }, 2000);
 }
 
 /* ── WebSocket ───────────────────────────────────────────────── */
