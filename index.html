@@ -345,9 +345,78 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
 .btn-open-external:hover{opacity:0.88;transform:translateY(-1px)}
 .btn-open-external:active{transform:translateY(0)}
 .btn-open-blue{background:var(--accent5)}
+
+/* ---- Modal de código fuente ---- */
+#code-modal{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,0.75);
+  display:none;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(4px);
+}
+#code-modal.show{display:flex}
+.code-modal-box{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:18px;width:100%;max-width:860px;
+  max-height:85vh;display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.code-modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.code-modal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.code-modal-actions{display:flex;align-items:center;gap:8px}
+.btn-copy-code{
+  background:var(--accent);border:none;border-radius:8px;
+  padding:6px 14px;color:#fff;font-size:12px;font-weight:600;
+  cursor:pointer;font-family:'DM Sans';transition:opacity 0.15s;
+}
+.btn-copy-code:hover{opacity:0.85}
+.btn-close-modal{
+  width:30px;height:30px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg3);color:var(--text2);cursor:pointer;
+  font-size:16px;display:flex;align-items:center;justify-content:center;
+  transition:background 0.15s;
+}
+.btn-close-modal:hover{background:rgba(255,255,255,0.08);color:var(--text)}
+.code-modal-body{
+  flex:1;overflow-y:auto;padding:20px;
+}
+.code-block{
+  background:var(--bg3);border:1px solid var(--border);border-radius:12px;
+  padding:18px;font-family:'Courier New',monospace;font-size:12px;
+  line-height:1.7;color:#c9d1d9;white-space:pre;overflow-x:auto;
+  tab-size:2;
+}
+/* Resaltado básico de sintaxis */
+.kw{color:#ff7b72}
+.str{color:#a5d6ff}
+.fn{color:#d2a8ff}
+.cm{color:#8b949e;font-style:italic}
+.tg{color:#7ee787}
+.at{color:#79c0ff}
+.nm{color:#ffa657}
 </style>
 </head>
 <body>
+
+<!-- ============================================================
+     MODAL CÓDIGO FUENTE
+     ============================================================ -->
+<div id="code-modal">
+  <div class="code-modal-box">
+    <div class="code-modal-header">
+      <div class="code-modal-title" id="code-modal-title">Código fuente</div>
+      <div class="code-modal-actions">
+        <button class="btn-copy-code" onclick="copiarCodigo()">📋 Copiar</button>
+        <button class="btn-close-modal" onclick="cerrarModalCodigo()">✕</button>
+      </div>
+    </div>
+    <div class="code-modal-body">
+      <div class="code-block" id="code-block-content"></div>
+    </div>
+  </div>
+</div>
 
 <!-- ============================================================
      LOGIN SCREEN
@@ -530,11 +599,15 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="dropdown-menu" id="menu-1-video">
-            <div class="dropdown-item" onclick="handleAction('Maps museos','Video','Reproducir')"><span class="dropdown-item-icon">▶️</span>Reproducir</div>
-            <div class="dropdown-item" onclick="handleAction('Maps museos','Video','Pausar')"><span class="dropdown-item-icon">⏸️</span>Pausar</div>
-            <div class="dropdown-item" onclick="handleAction('Maps museos','Video','Captura de pantalla')"><span class="dropdown-item-icon">📸</span>Captura de pantalla</div>
+            <!-- ↓ PEGA AQUÍ EL ENLACE DE YOUTUBE PARA MAPS MUSEOS ↓ -->
+            <div class="dropdown-item" onclick="abrirVideo('https://www.youtube.com/watch?v=ENLACE_MUSEOS')">
+              <span class="dropdown-item-icon">▶️</span>Explicación
+            </div>
           </div>
         </div>
+        <button class="dropdown-btn" onclick="abrirCodigo('museos')">
+          💻 Código
+        </button>
       </div>
       <div class="iframe-wrap">
         <iframe src="https://243105092escuela-eng.github.io/localizador/" title="Localizador de Museos" allowfullscreen loading="lazy"></iframe>
@@ -566,11 +639,15 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="dropdown-menu" id="menu-2-video">
-            <div class="dropdown-item" onclick="handleAction('Redes sociales','Video','Reproducir')"><span class="dropdown-item-icon">▶️</span>Reproducir</div>
-            <div class="dropdown-item" onclick="handleAction('Redes sociales','Video','Pausar')"><span class="dropdown-item-icon">⏸️</span>Pausar</div>
-            <div class="dropdown-item" onclick="handleAction('Redes sociales','Video','Captura de pantalla')"><span class="dropdown-item-icon">📸</span>Captura de pantalla</div>
+            <!-- ↓ PEGA AQUÍ EL ENLACE DE YOUTUBE PARA REDES SOCIALES ↓ -->
+            <div class="dropdown-item" onclick="abrirVideo('https://www.youtube.com/watch?v=ENLACE_REDES')">
+              <span class="dropdown-item-icon">▶️</span>Explicación
+            </div>
           </div>
         </div>
+        <button class="dropdown-btn" onclick="abrirCodigo('redes')">
+          💻 Código
+        </button>
       </div>
       <div class="iframe-wrap">
         <iframe src="https://243105092escuela-eng.github.io/Redes_sociales/" title="Redes Sociales" allowfullscreen loading="lazy"></iframe>
@@ -602,11 +679,15 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="dropdown-menu" id="menu-4-video">
-            <div class="dropdown-item" onclick="handleAction('Streaming LO-FI','Video','Reproducir')"><span class="dropdown-item-icon">▶️</span>Reproducir</div>
-            <div class="dropdown-item" onclick="handleAction('Streaming LO-FI','Video','Pausar')"><span class="dropdown-item-icon">⏸️</span>Pausar</div>
-            <div class="dropdown-item" onclick="handleAction('Streaming LO-FI','Video','Captura de pantalla')"><span class="dropdown-item-icon">📸</span>Captura de pantalla</div>
+            <!-- ↓ PEGA AQUÍ EL ENLACE DE YOUTUBE PARA STREAMING LO-FI ↓ -->
+            <div class="dropdown-item" onclick="abrirVideo('https://www.youtube.com/watch?v=ENLACE_LOFI')">
+              <span class="dropdown-item-icon">▶️</span>Explicación
+            </div>
           </div>
         </div>
+        <button class="dropdown-btn" onclick="abrirCodigo('lofi')">
+          💻 Código
+        </button>
       </div>
       <!-- Vista previa — el servidor bloquea embedding con X-Frame-Options -->
       <div class="preview-container">
@@ -669,11 +750,15 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="dropdown-menu" id="menu-5-video">
-            <div class="dropdown-item" onclick="handleAction('Tienda Online','Video','Reproducir')"><span class="dropdown-item-icon">▶️</span>Reproducir</div>
-            <div class="dropdown-item" onclick="handleAction('Tienda Online','Video','Pausar')"><span class="dropdown-item-icon">⏸️</span>Pausar</div>
-            <div class="dropdown-item" onclick="handleAction('Tienda Online','Video','Captura de pantalla')"><span class="dropdown-item-icon">📸</span>Captura de pantalla</div>
+            <!-- ↓ PEGA AQUÍ EL ENLACE DE YOUTUBE PARA TIENDA ONLINE ↓ -->
+            <div class="dropdown-item" onclick="abrirVideo('https://www.youtube.com/watch?v=ENLACE_TIENDA')">
+              <span class="dropdown-item-icon">▶️</span>Explicación
+            </div>
           </div>
         </div>
+        <button class="dropdown-btn" onclick="abrirCodigo('tienda')">
+          💻 Código
+        </button>
       </div>
       <!-- Vista previa — el servidor bloquea embedding con X-Frame-Options -->
       <div class="preview-container">
@@ -872,6 +957,103 @@ function closeAllDropdowns() {
   document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
   document.querySelectorAll('.dropdown-btn.open').forEach(b => b.classList.remove('open'));
 }
+
+/* ── Abrir video de YouTube ───────────────────────────────────── */
+function abrirVideo(url) {
+  closeAllDropdowns();
+  window.open(url, '_blank');
+}
+const CODIGOS = {
+  museos: {
+    titulo: '🗺️ Maps Museos — Código fuente',
+    url: 'https://243105092escuela-eng.github.io/localizador/'
+  },
+  redes: {
+    titulo: '📡 Redes Sociales — Código fuente',
+    url: 'https://243105092escuela-eng.github.io/Redes_sociales/'
+  },
+  lofi: {
+    titulo: '🎵 Streaming LO-FI — Código fuente',
+    url: 'http://dst.rf.gd/?i=1'
+  },
+  tienda: {
+    titulo: '🏪 Tienda Online — Código fuente',
+    url: 'https://tiendaonlines.free.nf/?i=1'
+  }
+};
+
+let codigoActual = '';
+
+function escaparHTML(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function resaltarSintaxis(code) {
+  return escaparHTML(code)
+    // Comentarios HTML <!-- -->
+    .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="cm">$1</span>')
+    // Strings entre comillas
+    .replace(/(&#34;[^&#34;]*&#34;|'[^']*'|`[^`]*`)/g, '<span class="str">$1</span>')
+    // Tags HTML
+    .replace(/(&lt;\/?)([\w-]+)/g, '<span class="tg">$1$2</span>')
+    // Atributos HTML
+    .replace(/\s([\w-]+=)/g, ' <span class="at">$1</span>')
+    // Palabras clave JS
+    .replace(/\b(const|let|var|function|return|if|else|for|while|class|new|this|async|await|import|export|default|typeof|true|false|null|undefined)\b/g,
+      '<span class="kw">$1</span>')
+    // Funciones JS
+    .replace(/\b([\w]+)(?=\s*\()/g, '<span class="fn">$1</span>')
+    // Números
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="nm">$1</span>');
+}
+
+async function abrirCodigo(seccion) {
+  closeAllDropdowns();
+  const info = CODIGOS[seccion];
+  document.getElementById('code-modal-title').textContent = info.titulo;
+  document.getElementById('code-block-content').innerHTML = '<span style="color:var(--text2)">Cargando código…</span>';
+  document.getElementById('code-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const res  = await fetch(info.url);
+    const text = await res.text();
+    codigoActual = text;
+    document.getElementById('code-block-content').innerHTML = resaltarSintaxis(text);
+  } catch (err) {
+    codigoActual = '';
+    document.getElementById('code-block-content').innerHTML =
+      `<span style="color:var(--accent3)">⚠ No se pudo cargar el código fuente.\nEl servidor de origen puede bloquear el acceso directo (CORS).\n\nURL: ${info.url}</span>`;
+  }
+}
+
+function cerrarModalCodigo() {
+  document.getElementById('code-modal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function copiarCodigo() {
+  if (!codigoActual) return;
+  navigator.clipboard.writeText(codigoActual).then(() => {
+    const btn = document.querySelector('.btn-copy-code');
+    btn.textContent = '✅ Copiado';
+    setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+  });
+}
+
+// Cerrar con Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') cerrarModalCodigo();
+});
+
+// Cerrar al hacer clic fuera
+document.getElementById('code-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('code-modal')) cerrarModalCodigo();
+});
 
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.dropdown-wrap')) closeAllDropdowns();
