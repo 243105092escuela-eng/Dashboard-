@@ -1,165 +1,154 @@
 // ============================================================
-//  DashHub — Servidor OAuth + WebSocket
-//  Node.js + Express + ws
+//  DashHub — Servidor TOTP (Google Authenticator)
+//  Node.js + Express + speakeasy + qrcode
 // ============================================================
 require('dotenv').config();
-const express    = require('express');
+const express   = require('express');
+const speakeasy = require('speakeasy');
+const QRCode    = require('qrcode');
+const http      = require('http');
 const { WebSocketServer } = require('ws');
-const fetch      = (...args) => import('node-fetch').then(({default: f}) => f(...args));
-const crypto     = require('crypto');
-const http       = require('http');
 
 const app    = express();
 const server = http.createServer(app);
+const PORT   = process.env.PORT || 3000;
 
-// ── Variables de entorno (se configuran en Railway) ──────────
-const CLIENT_ID     = process.env.GOOGLE_CLIENT_ID;
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const REDIRECT_URI  = process.env.REDIRECT_URI;   // https://TU-APP.railway.app/auth/callback
-const PORT          = process.env.PORT || 3000;
+// ── Secret TOTP ───────────────────────────────────────────────
+// Si no existe en Railway lo genera automáticamente al arrancar
+let TOTP_SECRET = process.env.TOTP_SECRET;
+if (!TOTP_SECRET) {
+  const generated = speakeasy.generateSecret({ name: 'DashHub' });
+  TOTP_SECRET = generated.base32;
+  console.log('[TOTP] Secret generado — agrégalo en Railway como TOTP_SECRET:');
+  console.log(TOTP_SECRET);
+}
 
-// ── CORS — permite que dashhub.html llame al servidor ────────
+const APP_NAME = process.env.APP_NAME || 'DashHub';
+const APP_USER = process.env.APP_USER || 'admin@dashhub.app';
+
+// ── CORS ──────────────────────────────────────────────────────
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
-
 app.use(express.json());
 
-// ── Mapa de sesiones pendientes ──────────────────────────────
-// sessionId → WebSocket del dashboard que espera el login
-const pendingSessions = new Map();
-
-// ── WebSocket Server ─────────────────────────────────────────
+// ── WebSocket — notifica al dashboard cuando el código es válido
 const wss = new WebSocketServer({ server });
+const clients = new Set();
 
-wss.on('connection', (ws, req) => {
-  // El dashboard envía su sessionId al conectarse
-  ws.on('message', (raw) => {
-    try {
-      const msg = JSON.parse(raw);
-      if (msg.type === 'REGISTER' && msg.sessionId) {
-        pendingSessions.set(msg.sessionId, ws);
-        console.log('[WS] Dashboard registrado:', msg.sessionId);
-      }
-    } catch (_) {}
-  });
-
+wss.on('connection', (ws) => {
+  clients.add(ws);
+  console.log('[WS] Dashboard conectado. Total:', clients.size);
   ws.on('close', () => {
-    // Limpiar sesiones huérfanas
-    for (const [id, socket] of pendingSessions.entries()) {
-      if (socket === ws) pendingSessions.delete(id);
-    }
+    clients.delete(ws);
+    console.log('[WS] Dashboard desconectado. Total:', clients.size);
   });
 });
 
-// ── Ruta 1: Generar URL de Google OAuth ──────────────────────
-// El QR del dashboard apunta a esta ruta
-app.get('/auth/google', (req, res) => {
-  const sessionId = req.query.session || crypto.randomUUID();
-  const url =
-    'https://accounts.google.com/o/oauth2/v2/auth' +
-    '?client_id='     + encodeURIComponent(CLIENT_ID) +
-    '&redirect_uri='  + encodeURIComponent(REDIRECT_URI) +
-    '&response_type=code' +
-    '&scope='         + encodeURIComponent('openid email profile') +
-    '&state='         + sessionId +
-    '&prompt=select_account';
-  res.redirect(url);
+function notifyDashboard(payload) {
+  const msg = JSON.stringify(payload);
+  for (const ws of clients) {
+    if (ws.readyState === 1) ws.send(msg);
+  }
+}
+
+// ── Ruta 1: Health check ──────────────────────────────────────
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', service: 'DashHub TOTP Server' });
 });
 
-// ── Ruta 2: Callback de Google ────────────────────────────────
-app.get('/auth/callback', async (req, res) => {
-  const { code, state: sessionId } = req.query;
-
-  if (!code) {
-    return res.status(400).send('<h2>❌ No se recibió código de Google.</h2>');
-  }
-
+// ── Ruta 2: QR de configuración para Google Authenticator ─────
+// Abre esta URL UNA SOLA VEZ para vincular Google Authenticator
+app.get('/setup', async (req, res) => {
   try {
-    // Intercambiar código por tokens
-    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        code,
-        client_id:     CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        redirect_uri:  REDIRECT_URI,
-        grant_type:    'authorization_code',
-      }),
+    const otpauthUrl = speakeasy.otpauthURL({
+      secret:   TOTP_SECRET,
+      label:    encodeURIComponent(APP_USER),
+      issuer:   APP_NAME,
+      encoding: 'base32',
     });
 
-    const tokenData = await tokenRes.json();
-    if (!tokenData.id_token) {
-      console.error('[OAuth] Error en tokens:', tokenData);
-      return res.status(500).send('<h2>❌ Error al obtener token de Google.</h2>');
-    }
+    const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
 
-    // Decodificar JWT para obtener nombre y email
-    const payload = JSON.parse(
-      Buffer.from(tokenData.id_token.split('.')[1], 'base64url').toString()
-    );
-
-    const user = {
-      name:    payload.name  || 'Usuario',
-      email:   payload.email || '',
-      picture: payload.picture || '',
-    };
-
-    console.log('[OAuth] Login exitoso:', user.email);
-
-    // Notificar al dashboard vía WebSocket
-    const dashWs = pendingSessions.get(sessionId);
-    if (dashWs && dashWs.readyState === 1) {
-      dashWs.send(JSON.stringify({ type: 'LOGIN_OK', ...user }));
-      pendingSessions.delete(sessionId);
-    } else {
-      console.warn('[WS] No se encontró dashboard para sessionId:', sessionId);
-    }
-
-    // Página de confirmación en el móvil
     res.send(`
       <!DOCTYPE html>
       <html lang="es">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>DashHub — Login exitoso</title>
+        <title>DashHub — Configurar Authenticator</title>
         <style>
           body{font-family:sans-serif;background:#0f0f13;color:#e8e6f0;
                display:flex;align-items:center;justify-content:center;
-               height:100vh;margin:0;flex-direction:column;gap:16px;text-align:center;padding:20px}
-          .check{font-size:64px}
-          h2{font-size:22px;margin:0}
-          p{color:#9997a8;font-size:14px;margin:0}
-          .badge{background:rgba(29,158,117,0.15);color:#1D9E75;
-                 border:1px solid rgba(29,158,117,0.3);border-radius:20px;
-                 padding:8px 20px;font-size:13px;font-weight:600}
+               min-height:100vh;margin:0;flex-direction:column;gap:20px;
+               text-align:center;padding:30px}
+          h2{font-size:22px;margin:0;color:#1D9E75}
+          p{color:#9997a8;font-size:14px;margin:0;max-width:320px;line-height:1.6}
+          img{border-radius:16px;background:#fff;padding:16px;width:220px}
+          .step{background:#17171e;border:1px solid rgba(255,255,255,0.07);
+                border-radius:12px;padding:14px 20px;max-width:340px;
+                font-size:13px;color:#9997a8;line-height:1.7;text-align:left}
+          .step b{color:#e8e6f0}
+          .warn{background:rgba(216,90,48,0.1);border:1px solid rgba(216,90,48,0.3);
+                border-radius:10px;padding:10px 16px;font-size:12px;
+                color:#e07a5a;max-width:340px}
         </style>
       </head>
       <body>
-        <div class="check">✅</div>
-        <h2>¡Login exitoso!</h2>
-        <div class="badge">${user.name}</div>
-        <p>${user.email}</p>
-        <p style="margin-top:12px">Puedes cerrar esta pestaña.<br>El dashboard ya está activo.</p>
+        <h2>⚙️ Configurar Google Authenticator</h2>
+        <p>Escanea este QR <b>una sola vez</b> con Google Authenticator para vincular DashHub.</p>
+        <img src="${qrDataUrl}" alt="QR TOTP">
+        <div class="step">
+          <b>Pasos:</b><br>
+          1. Abre <b>Google Authenticator</b> en tu teléfono<br>
+          2. Toca el <b>+</b> → "Escanear código QR"<br>
+          3. Apunta al código de arriba<br>
+          4. Aparecerá <b>DashHub</b> con un código de 6 dígitos<br>
+          5. Usa ese código para iniciar sesión en el dashboard
+        </div>
+        <div class="warn">
+          ⚠️ Una vez configurado no compartas este QR con nadie.<br>
+          Esta página solo debe abrirse una vez.
+        </div>
       </body>
       </html>
     `);
   } catch (err) {
-    console.error('[OAuth] Excepción:', err);
-    res.status(500).send('<h2>❌ Error interno del servidor.</h2>');
+    console.error('[Setup] Error:', err);
+    res.status(500).send('<h2>❌ Error generando QR.</h2>');
   }
 });
 
-// ── Ruta 3: Health check (Railway lo necesita) ───────────────
-app.get('/', (req, res) => {
-  res.json({ status: 'ok', service: 'DashHub OAuth Server' });
+// ── Ruta 3: Verificar código TOTP ─────────────────────────────
+app.post('/auth/verify', (req, res) => {
+  const { token, name } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ ok: false, error: 'Falta el código.' });
+  }
+
+  const valid = speakeasy.totp.verify({
+    secret:   TOTP_SECRET,
+    encoding: 'base32',
+    token:    token.toString().trim(),
+    window:   1, // acepta ±30 segundos de desfase de reloj
+  });
+
+  if (valid) {
+    console.log('[TOTP] Login exitoso');
+    notifyDashboard({ type: 'LOGIN_OK', name: name || 'Usuario', email: APP_USER });
+    return res.json({ ok: true });
+  } else {
+    console.warn('[TOTP] Código incorrecto');
+    return res.status(401).json({ ok: false, error: 'Código incorrecto.' });
+  }
 });
 
-// ── Iniciar servidor ─────────────────────────────────────────
+// ── Iniciar servidor ──────────────────────────────────────────
 server.listen(PORT, () => {
-  console.log(`[DashHub] Servidor corriendo en puerto ${PORT}`);
+  console.log(`[DashHub] Servidor TOTP corriendo en puerto ${PORT}`);
 });
