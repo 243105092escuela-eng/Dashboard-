@@ -383,65 +383,97 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
     </div>
 
     <div class="login-right">
-      <div class="qr-heading">Iniciar sesión</div>
-      <div class="qr-subheading">Ingresa el código de 6 dígitos de<br><b>Google Authenticator</b></div>
+      <!-- ── VISTA 1: Escanear QR con Authenticator ── -->
+      <div id="vista-setup">
+        <div class="qr-heading">Configurar Authenticator</div>
+        <div class="qr-subheading">Escanea este QR con Google Authenticator<br>para vincular DashHub</div>
 
-      <!-- Ícono animado -->
-      <div style="font-size:52px;margin:10px 0 16px">🔐</div>
+        <!-- QR cargado desde el servidor -->
+        <div class="qr-box" id="setup-qr-box">
+          <img id="setup-qr-img" src="" alt="QR" style="width:156px;height:156px;display:none;border-radius:4px">
+          <div class="qr-spinner" id="setup-spinner">
+            <div class="spin-ring"></div>
+            <span>Cargando QR…</span>
+          </div>
+        </div>
 
-      <!-- Campo de nombre -->
-      <div class="url-config">
-        <label class="url-label">Tu nombre</label>
-        <input class="url-input" type="text" id="totp-name" placeholder="Ej: Juan" style="width:100%" />
+        <div class="steps" style="margin-bottom:12px">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-txt">Abre Google Authenticator → toca <b>+</b></div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-txt">Selecciona "Escanear código QR"</div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-txt">Apunta al código de arriba</div>
+          </div>
+        </div>
+
+        <button class="btn-gen" onclick="mostrarVista('login')"
+          style="width:100%;padding:11px;border-radius:10px;font-size:13px">
+          Ya lo escaneé → Iniciar sesión
+        </button>
+        <button class="btn-demo" onclick="simulateLogin()" style="margin-top:8px">
+          ⚡ Modo demo (sin código)
+        </button>
       </div>
 
-      <!-- Campo código TOTP -->
-      <div class="url-config">
-        <label class="url-label">Código de Google Authenticator</label>
-        <div class="url-row">
+      <!-- ── VISTA 2: Ingresar código TOTP ── -->
+      <div id="vista-login" style="display:none;width:100%;flex-direction:column;align-items:center;gap:0">
+        <div class="qr-heading">Iniciar sesión</div>
+        <div class="qr-subheading">Ingresa el código de 6 dígitos de<br><b>Google Authenticator</b></div>
+
+        <div style="font-size:48px;margin:8px 0 14px">🔐</div>
+
+        <div class="url-config" style="width:100%">
+          <label class="url-label">Tu nombre</label>
+          <input class="url-input" type="text" id="totp-name" placeholder="Ej: Juan" style="width:100%" />
+        </div>
+
+        <div class="url-config" style="width:100%">
+          <label class="url-label">Código de Google Authenticator</label>
           <input class="url-input" type="text" id="totp-code"
             placeholder="000000" maxlength="6"
-            style="font-size:22px;font-weight:700;letter-spacing:8px;text-align:center"
+            style="width:100%;font-size:22px;font-weight:700;letter-spacing:8px;text-align:center"
             oninput="this.value=this.value.replace(/\D/g,'')"
             onkeydown="if(event.key==='Enter') verificarTOTP()" />
         </div>
-      </div>
 
-      <!-- Estado -->
-      <div class="status-badge waiting" id="status-badge" style="width:100%;justify-content:center">
-        <div class="status-dot"></div>
-        <span id="status-text">Esperando código…</span>
-      </div>
-
-      <!-- Botón verificar -->
-      <button class="btn-gen" onclick="verificarTOTP()"
-        style="width:100%;padding:12px;border-radius:10px;font-size:14px;margin-bottom:12px">
-        Verificar código →
-      </button>
-
-      <!-- Pasos -->
-      <div class="steps">
-        <div class="step" id="step1">
-          <div class="step-num">1</div>
-          <div class="step-txt">Abre Google Authenticator</div>
-          <div class="step-check">✓</div>
+        <div class="status-badge waiting" id="status-badge" style="width:100%;justify-content:center">
+          <div class="status-dot"></div>
+          <span id="status-text">Esperando código…</span>
         </div>
-        <div class="step" id="step2">
-          <div class="step-num">2</div>
-          <div class="step-txt">Copia el código de DashHub</div>
-          <div class="step-check">✓</div>
-        </div>
-        <div class="step" id="step3">
-          <div class="step-num">3</div>
-          <div class="step-txt">Pégalo aquí y presiona verificar</div>
-          <div class="step-check">✓</div>
-        </div>
-      </div>
 
-      <!-- Demo -->
-      <button class="btn-demo" onclick="simulateLogin()" style="margin-top:10px">
-        ⚡ Modo demo (sin código)
-      </button>
+        <button class="btn-gen" onclick="verificarTOTP()"
+          style="width:100%;padding:12px;border-radius:10px;font-size:14px;margin-bottom:8px">
+          Verificar código →
+        </button>
+
+        <div class="steps">
+          <div class="step" id="step1">
+            <div class="step-num">1</div>
+            <div class="step-txt">Abre Google Authenticator</div>
+            <div class="step-check">✓</div>
+          </div>
+          <div class="step" id="step2">
+            <div class="step-num">2</div>
+            <div class="step-txt">Copia el código de DashHub</div>
+            <div class="step-check">✓</div>
+          </div>
+          <div class="step" id="step3">
+            <div class="step-num">3</div>
+            <div class="step-txt">Pégalo aquí y presiona verificar</div>
+            <div class="step-check">✓</div>
+          </div>
+        </div>
+
+        <button class="btn-demo" onclick="mostrarVista('setup')" style="margin-top:8px">
+          ← Ver QR de configuración
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -699,6 +731,34 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
 const SERVER_URL = 'https://dashboard-production-f805.up.railway.app';
 
 /* ============================================================
+   VISTAS DEL LOGIN
+   ============================================================ */
+function mostrarVista(vista) {
+  document.getElementById('vista-setup').style.display = vista === 'setup' ? 'flex' : 'none';
+  document.getElementById('vista-login').style.display = vista === 'login' ? 'flex' : 'none';
+  document.getElementById('vista-setup').style.flexDirection = 'column';
+  document.getElementById('vista-setup').style.alignItems   = 'center';
+  document.getElementById('vista-setup').style.width        = '100%';
+}
+
+/* ============================================================
+   CARGAR QR DE SETUP DESDE EL SERVIDOR
+   ============================================================ */
+async function cargarQRSetup() {
+  try {
+    const res  = await fetch(`${SERVER_URL}/setup-qr`);
+    const data = await res.json();
+    const img  = document.getElementById('setup-qr-img');
+    img.src    = data.qr;
+    img.style.display = 'block';
+    document.getElementById('setup-spinner').classList.add('hidden');
+  } catch (err) {
+    document.getElementById('setup-spinner').innerHTML = '<span style="color:#e07a5a;font-size:11px">Sin conexión al servidor</span>';
+    console.error('[Setup QR]', err);
+  }
+}
+
+/* ============================================================
    WEBSOCKET
    ============================================================ */
 let ws = null;
@@ -723,7 +783,11 @@ function conectarWebSocket() {
   ws.onerror = (e) => console.warn('[WS] Error:', e);
 }
 
-window.addEventListener('load', conectarWebSocket);
+window.addEventListener('load', () => {
+  conectarWebSocket();
+  cargarQRSetup();
+  mostrarVista('setup');
+});
 
 /* ============================================================
    VERIFICAR CÓDIGO TOTP
@@ -806,6 +870,7 @@ function logout() {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('done'));
   document.getElementById('totp-code').value = '';
   setBadge('waiting', 'Esperando código…');
+  mostrarVista('setup');
 }
 
 /* ---- Navegación ---- */
