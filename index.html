@@ -66,7 +66,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 .qr-box{
   background:#fff;border-radius:18px;padding:14px;
-  width:184px;height:184px;
+  width:200px;height:200px;
   display:flex;align-items:center;justify-content:center;
   position:relative;margin-bottom:20px;flex-shrink:0;
 }
@@ -736,7 +736,7 @@ function conectarWebSocket() {
 function buildQR() {
   sessionId = generarSessionId();
 
-  // URL del servidor (el servidor redirige a Google con el sessionId)
+  // URL corta — el servidor redirige a Google internamente
   const customUrl = document.getElementById('oauth-url').value.trim();
   const qrTarget = customUrl.length > 5
     ? customUrl
@@ -752,10 +752,9 @@ function buildQR() {
       height: 156,
       colorDark: '#000000',
       colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
+      correctLevel: QRCode.CorrectLevel.L
     });
     document.getElementById('qr-spinner').classList.add('hidden');
-    // Conectar WebSocket después de generar el QR
     if (!ws || ws.readyState === WebSocket.CLOSED) conectarWebSocket();
   }, 600);
 }
