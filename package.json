@@ -1,16 +1,16 @@
 {
   "name": "dashhub-server",
-  "version": "1.0.0",
-  "description": "Servidor OAuth + WebSocket para DashHub",
+  "version": "2.0.0",
+  "description": "Servidor TOTP + WebSocket para DashHub",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "node-fetch": "^3.3.2",
+    "speakeasy": "^2.0.0",
+    "qrcode": "^1.5.4",
     "ws": "^8.17.1"
   },
   "engines": {
