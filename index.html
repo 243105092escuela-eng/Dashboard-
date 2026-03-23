@@ -484,9 +484,6 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
           </button>
           <div class="dropdown-menu" id="menu-1-archivo">
             <div class="dropdown-item" onclick="window.open('manual_museos.pdf','_blank')"><span class="dropdown-item-icon">📄</span>Ver manual (PDF)</div>
-            <div class="dropdown-item" onclick="handleAction('Maps museos','Archivo','Descargar manual')"><span class="dropdown-item-icon">⬇️</span>Descargar manual</div>
-            <div class="dropdown-item" onclick="handleAction('Maps museos','Archivo','Guardar')"><span class="dropdown-item-icon">💾</span>Guardar</div>
-            <div class="dropdown-item" onclick="handleAction('Maps museos','Archivo','Exportar')"><span class="dropdown-item-icon">📤</span>Exportar</div>
           </div>
         </div>
         <!-- Menú Video -->
@@ -524,9 +521,6 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
           </button>
           <div class="dropdown-menu" id="menu-2-archivo">
             <div class="dropdown-item" onclick="window.open('manual_redes.pdf','_blank')"><span class="dropdown-item-icon">📄</span>Ver manual (PDF)</div>
-            <div class="dropdown-item" onclick="handleAction('Redes sociales','Archivo','Descargar manual')"><span class="dropdown-item-icon">⬇️</span>Descargar manual</div>
-            <div class="dropdown-item" onclick="handleAction('Redes sociales','Archivo','Guardar')"><span class="dropdown-item-icon">💾</span>Guardar</div>
-            <div class="dropdown-item" onclick="handleAction('Redes sociales','Archivo','Exportar')"><span class="dropdown-item-icon">📤</span>Exportar</div>
           </div>
         </div>
         <div class="dropdown-wrap">
@@ -563,9 +557,6 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
           </button>
           <div class="dropdown-menu" id="menu-4-archivo">
             <div class="dropdown-item" onclick="window.open('manual_lofi.pdf','_blank')"><span class="dropdown-item-icon">📄</span>Ver manual (PDF)</div>
-            <div class="dropdown-item" onclick="handleAction('Streaming LO-FI','Archivo','Descargar manual')"><span class="dropdown-item-icon">⬇️</span>Descargar manual</div>
-            <div class="dropdown-item" onclick="handleAction('Streaming LO-FI','Archivo','Guardar')"><span class="dropdown-item-icon">💾</span>Guardar</div>
-            <div class="dropdown-item" onclick="handleAction('Streaming LO-FI','Archivo','Exportar')"><span class="dropdown-item-icon">📤</span>Exportar</div>
           </div>
         </div>
         <div class="dropdown-wrap">
@@ -633,9 +624,6 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
           </button>
           <div class="dropdown-menu" id="menu-5-archivo">
             <div class="dropdown-item" onclick="window.open('manual_tienda.pdf','_blank')"><span class="dropdown-item-icon">📄</span>Ver manual (PDF)</div>
-            <div class="dropdown-item" onclick="handleAction('Tienda Online','Archivo','Descargar manual')"><span class="dropdown-item-icon">⬇️</span>Descargar manual</div>
-            <div class="dropdown-item" onclick="handleAction('Tienda Online','Archivo','Guardar')"><span class="dropdown-item-icon">💾</span>Guardar</div>
-            <div class="dropdown-item" onclick="handleAction('Tienda Online','Archivo','Exportar')"><span class="dropdown-item-icon">📤</span>Exportar</div>
           </div>
         </div>
         <div class="dropdown-wrap">
@@ -693,28 +681,73 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
 
 <script>
 /* ============================================================
-   QR LOGIN
+   CONFIGURACIÓN — reemplaza con tu URL de Railway una vez
+   que hayas desplegado el servidor
    ============================================================ */
-const GOOGLE_CLIENT_ID = 'TU_CLIENT_ID';
-const REDIRECT_URI     = 'https://tuapp.com/auth/callback';
+const SERVER_URL = 'https://dashboard-production-f805.up.railway.app';
 
+/* ============================================================
+   WEBSOCKET — conexión en tiempo real con el servidor
+   ============================================================ */
+let ws = null;
+let sessionId = null;
+
+function generarSessionId() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+}
+
+function conectarWebSocket() {
+  const wsUrl = SERVER_URL.replace('https://', 'wss://').replace('http://', 'ws://');
+  ws = new WebSocket(wsUrl);
+
+  ws.onopen = () => {
+    // Registrar esta sesión en el servidor
+    ws.send(JSON.stringify({ type: 'REGISTER', sessionId }));
+    console.log('[WS] Conectado. Session:', sessionId);
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'LOGIN_OK') {
+        // El móvil completó el login — entrar al dashboard
+        document.getElementById('step1').classList.add('done');
+        document.getElementById('step2').classList.add('done');
+        document.getElementById('step3').classList.add('done');
+        setBadge('success', '¡Sesión iniciada!');
+        setTimeout(() => enterDashboard(msg.name, msg.email, msg.picture), 600);
+      }
+    } catch (_) {}
+  };
+
+  ws.onclose = () => {
+    // Reconectar automáticamente tras 3 segundos
+    console.log('[WS] Desconectado. Reconectando...');
+    setTimeout(conectarWebSocket, 3000);
+  };
+
+  ws.onerror = (err) => console.warn('[WS] Error:', err);
+}
+
+/* ============================================================
+   QR LOGIN — genera el QR apuntando al servidor Railway
+   ============================================================ */
 function buildQR() {
+  sessionId = generarSessionId();
+
+  // URL del servidor (el servidor redirige a Google con el sessionId)
   const customUrl = document.getElementById('oauth-url').value.trim();
-  const oauthUrl = customUrl.length > 5
+  const qrTarget = customUrl.length > 5
     ? customUrl
-    : 'https://accounts.google.com/o/oauth2/v2/auth'
-      + '?client_id=' + GOOGLE_CLIENT_ID
-      + '&redirect_uri=' + encodeURIComponent(REDIRECT_URI)
-      + '&response_type=code'
-      + '&scope=' + encodeURIComponent('openid email profile')
-      + '&prompt=select_account';
+    : `${SERVER_URL}/auth/google?session=${sessionId}`;
 
   document.getElementById('qr-render').innerHTML = '';
   document.getElementById('qr-spinner').classList.remove('hidden');
 
   setTimeout(() => {
     new QRCode(document.getElementById('qr-render'), {
-      text: oauthUrl,
+      text: qrTarget,
       width: 156,
       height: 156,
       colorDark: '#000000',
@@ -722,17 +755,19 @@ function buildQR() {
       correctLevel: QRCode.CorrectLevel.M
     });
     document.getElementById('qr-spinner').classList.add('hidden');
+    // Conectar WebSocket después de generar el QR
+    if (!ws || ws.readyState === WebSocket.CLOSED) conectarWebSocket();
   }, 600);
 }
 
 window.addEventListener('load', buildQR);
 
+/* ---- Simulación demo (funciona sin servidor) ---- */
 let simTimer;
 function simulateLogin() {
   clearTimeout(simTimer);
   setBadge('scanning', 'Escaneando QR…');
   document.getElementById('step1').classList.add('done');
-
   simTimer = setTimeout(() => {
     document.getElementById('step2').classList.add('done');
     setBadge('scanning', 'Autenticando con Google…');
@@ -740,7 +775,7 @@ function simulateLogin() {
       document.getElementById('step3').classList.add('done');
       setBadge('success', '¡Sesión iniciada!');
       simTimer = setTimeout(() => {
-        enterDashboard('Usuario Demo', 'demo@gmail.com');
+        enterDashboard('Usuario Demo', 'demo@gmail.com', '');
       }, 700);
     }, 1200);
   }, 1200);
@@ -752,9 +787,12 @@ function setBadge(cls, txt) {
   document.getElementById('status-text').textContent = txt;
 }
 
-function enterDashboard(name, email) {
+function enterDashboard(name, email, picture) {
   document.getElementById('sb-name').textContent = name.split(' ')[0];
   document.getElementById('sb-email').textContent = email;
+  // Mostrar foto de perfil de Google si existe
+  const av = document.getElementById('sb-av');
+  if (picture) av.innerHTML = `<img src="${picture}" alt="avatar">`;
   document.getElementById('login-screen').classList.add('out');
   setTimeout(() => {
     document.getElementById('login-screen').style.display = 'none';
@@ -768,6 +806,7 @@ function logout() {
   document.getElementById('dashboard').classList.remove('show');
   document.querySelectorAll('.step').forEach(s => s.classList.remove('done'));
   setBadge('waiting', 'Esperando escaneo…');
+  if (ws) ws.close();
   buildQR();
 }
 
@@ -797,17 +836,8 @@ function closeAllDropdowns() {
   document.querySelectorAll('.dropdown-btn.open').forEach(b => b.classList.remove('open'));
 }
 
-function handleAction(section, menu, action) {
-  closeAllDropdowns();
-  // Aquí puedes conectar la lógica real de cada opción
-  console.log('[DashHub]', section, '→', menu, '→', action);
-}
-
-// Cerrar dropdowns al hacer click fuera
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.dropdown-wrap')) {
-    closeAllDropdowns();
-  }
+  if (!e.target.closest('.dropdown-wrap')) closeAllDropdowns();
 });
 </script>
 </body>
