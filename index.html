@@ -383,13 +383,12 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
     </div>
 
     <div class="login-right">
-      <!-- ── VISTA 1: Escanear QR con Authenticator ── -->
-      <div id="vista-setup">
-        <div class="qr-heading">Configurar Authenticator</div>
-        <div class="qr-subheading">Escanea este QR con Google Authenticator<br>para vincular DashHub</div>
+      <!-- ── VISTA 1: QR para escanear con Authenticator ── -->
+      <div id="vista-setup" style="display:flex;flex-direction:column;align-items:center;width:100%">
+        <div class="qr-heading">Iniciar sesión</div>
+        <div class="qr-subheading">Escanea este QR con<br><b>Google Authenticator</b></div>
 
-        <!-- QR cargado desde el servidor -->
-        <div class="qr-box" id="setup-qr-box">
+        <div class="qr-box">
           <img id="setup-qr-img" src="" alt="QR" style="width:156px;height:156px;display:none;border-radius:4px">
           <div class="qr-spinner" id="setup-spinner">
             <div class="spin-ring"></div>
@@ -397,7 +396,7 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
           </div>
         </div>
 
-        <div class="steps" style="margin-bottom:12px">
+        <div class="steps">
           <div class="step">
             <div class="step-num">1</div>
             <div class="step-txt">Abre Google Authenticator → toca <b>+</b></div>
@@ -408,25 +407,17 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
           </div>
           <div class="step">
             <div class="step-num">3</div>
-            <div class="step-txt">Apunta al código de arriba</div>
+            <div class="step-txt">Apunta al QR — el código aparece automáticamente</div>
           </div>
         </div>
-
-        <button class="btn-gen" onclick="mostrarVista('login')"
-          style="width:100%;padding:11px;border-radius:10px;font-size:13px">
-          Ya lo escaneé → Iniciar sesión
-        </button>
-        <button class="btn-demo" onclick="simulateLogin()" style="margin-top:8px">
-          ⚡ Modo demo (sin código)
-        </button>
       </div>
 
-      <!-- ── VISTA 2: Ingresar código TOTP ── -->
-      <div id="vista-login" style="display:none;width:100%;flex-direction:column;align-items:center;gap:0">
-        <div class="qr-heading">Iniciar sesión</div>
-        <div class="qr-subheading">Ingresa el código de 6 dígitos de<br><b>Google Authenticator</b></div>
+      <!-- ── VISTA 2: Ingresar código TOTP (aparece automáticamente) ── -->
+      <div id="vista-login" style="display:none;flex-direction:column;align-items:center;width:100%">
+        <div class="qr-heading">Introduce el código</div>
+        <div class="qr-subheading">Copia el código de 6 dígitos que<br>muestra Google Authenticator</div>
 
-        <div style="font-size:48px;margin:8px 0 14px">🔐</div>
+        <div style="font-size:48px;margin:10px 0 16px">🔐</div>
 
         <div class="url-config" style="width:100%">
           <label class="url-label">Tu nombre</label>
@@ -448,11 +439,11 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
         </div>
 
         <button class="btn-gen" onclick="verificarTOTP()"
-          style="width:100%;padding:12px;border-radius:10px;font-size:14px;margin-bottom:8px">
+          style="width:100%;padding:12px;border-radius:10px;font-size:14px">
           Verificar código →
         </button>
 
-        <div class="steps">
+        <div class="steps" style="margin-top:12px">
           <div class="step" id="step1">
             <div class="step-num">1</div>
             <div class="step-txt">Abre Google Authenticator</div>
@@ -465,14 +456,10 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
           </div>
           <div class="step" id="step3">
             <div class="step-num">3</div>
-            <div class="step-txt">Pégalo aquí y presiona verificar</div>
+            <div class="step-txt">Escríbelo arriba y presiona verificar</div>
             <div class="step-check">✓</div>
           </div>
         </div>
-
-        <button class="btn-demo" onclick="mostrarVista('setup')" style="margin-top:8px">
-          ← Ver QR de configuración
-        </button>
       </div>
     </div>
   </div>
@@ -725,25 +712,22 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
 </div>
 
 <script>
-/* ============================================================
-   CONFIGURACIÓN
-   ============================================================ */
 const SERVER_URL = 'https://dashboard-production-f805.up.railway.app';
 
-/* ============================================================
-   VISTAS DEL LOGIN
-   ============================================================ */
+/* ── Vistas ─────────────────────────────────────────────────── */
 function mostrarVista(vista) {
-  document.getElementById('vista-setup').style.display = vista === 'setup' ? 'flex' : 'none';
-  document.getElementById('vista-login').style.display = vista === 'login' ? 'flex' : 'none';
-  document.getElementById('vista-setup').style.flexDirection = 'column';
-  document.getElementById('vista-setup').style.alignItems   = 'center';
-  document.getElementById('vista-setup').style.width        = '100%';
+  const s = document.getElementById('vista-setup');
+  const l = document.getElementById('vista-login');
+  s.style.display = vista === 'setup' ? 'flex' : 'none';
+  l.style.display = vista === 'login' ? 'flex' : 'none';
+  if (vista === 'login') {
+    setTimeout(() => document.getElementById('totp-code').focus(), 100);
+  }
 }
 
-/* ============================================================
-   CARGAR QR DE SETUP DESDE EL SERVIDOR
-   ============================================================ */
+/* ── Cargar QR desde el servidor ────────────────────────────── */
+let pollingTimer = null;
+
 async function cargarQRSetup() {
   try {
     const res  = await fetch(`${SERVER_URL}/setup-qr`);
@@ -752,46 +736,69 @@ async function cargarQRSetup() {
     img.src    = data.qr;
     img.style.display = 'block';
     document.getElementById('setup-spinner').classList.add('hidden');
+    // Iniciar polling — cuando Authenticator escanea el QR
+    // el servidor recibe la primera verificación y notifica via WS
+    iniciarPollingEscaneo();
   } catch (err) {
-    document.getElementById('setup-spinner').innerHTML = '<span style="color:#e07a5a;font-size:11px">Sin conexión al servidor</span>';
-    console.error('[Setup QR]', err);
+    document.getElementById('setup-spinner').innerHTML =
+      '<span style="color:#e07a5a;font-size:11px">Sin conexión al servidor</span>';
   }
 }
 
-/* ============================================================
-   WEBSOCKET
-   ============================================================ */
+function iniciarPollingEscaneo() {
+  clearInterval(pollingTimer);
+  pollingTimer = setInterval(async () => {
+    try {
+      const res  = await fetch(`${SERVER_URL}/check-scanned`);
+      const data = await res.json();
+      if (data.scanned) {
+        clearInterval(pollingTimer);
+        mostrarVista('login');
+      }
+    } catch (_) {}
+  }, 2000);
+}
+
+/* ── WebSocket ───────────────────────────────────────────────── */
 let ws = null;
 
 function conectarWebSocket() {
   const wsUrl = SERVER_URL.replace('https://', 'wss://').replace('http://', 'ws://');
   ws = new WebSocket(wsUrl);
-  ws.onopen    = () => console.log('[WS] Conectado al servidor');
+
+  ws.onopen = () => console.log('[WS] Conectado');
+
   ws.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data);
+
+      // Authenticator escaneó el QR → mostrar campo de código
+      if (msg.type === 'QR_SCANNED') {
+        mostrarVista('login');
+      }
+
+      // Código correcto → entrar al dashboard
       if (msg.type === 'LOGIN_OK') {
         document.getElementById('step1').classList.add('done');
         document.getElementById('step2').classList.add('done');
         document.getElementById('step3').classList.add('done');
         setBadge('success', '¡Código correcto!');
-        setTimeout(() => enterDashboard(msg.name, msg.email || '', ''), 600);
+        setTimeout(() => enterDashboard(msg.name || 'Usuario', '', ''), 600);
       }
     } catch (_) {}
   };
+
   ws.onclose = () => setTimeout(conectarWebSocket, 3000);
   ws.onerror = (e) => console.warn('[WS] Error:', e);
 }
 
 window.addEventListener('load', () => {
+  mostrarVista('setup');
   conectarWebSocket();
   cargarQRSetup();
-  mostrarVista('setup');
 });
 
-/* ============================================================
-   VERIFICAR CÓDIGO TOTP
-   ============================================================ */
+/* ── Verificar código TOTP ───────────────────────────────────── */
 async function verificarTOTP() {
   const code = document.getElementById('totp-code').value.trim();
   const name = document.getElementById('totp-name').value.trim() || 'Usuario';
@@ -825,26 +832,10 @@ async function verificarTOTP() {
     }
   } catch (err) {
     setBadge('waiting', 'Error de conexión con el servidor');
-    console.error(err);
   }
 }
 
-/* ---- Demo ---- */
-let simTimer;
-function simulateLogin() {
-  clearTimeout(simTimer);
-  setBadge('scanning', 'Entrando en modo demo…');
-  document.getElementById('step1').classList.add('done');
-  simTimer = setTimeout(() => {
-    document.getElementById('step2').classList.add('done');
-    simTimer = setTimeout(() => {
-      document.getElementById('step3').classList.add('done');
-      setBadge('success', '¡Sesión iniciada!');
-      simTimer = setTimeout(() => enterDashboard('Demo', '', ''), 700);
-    }, 800);
-  }, 800);
-}
-
+/* ── Helpers ─────────────────────────────────────────────────── */
 function setBadge(cls, txt) {
   const b = document.getElementById('status-badge');
   b.className = 'status-badge ' + cls;
@@ -871,9 +862,10 @@ function logout() {
   document.getElementById('totp-code').value = '';
   setBadge('waiting', 'Esperando código…');
   mostrarVista('setup');
+  cargarQRSetup();
 }
 
-/* ---- Navegación ---- */
+/* ── Navegación ──────────────────────────────────────────────── */
 function goTo(id) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -882,7 +874,6 @@ function goTo(id) {
   closeAllDropdowns();
 }
 
-/* ---- Menús desplegables ---- */
 function toggleDropdown(btnId, menuId) {
   const btn  = document.getElementById(btnId);
   const menu = document.getElementById(menuId);
