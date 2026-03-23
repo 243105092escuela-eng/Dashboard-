@@ -225,6 +225,126 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
   border:none;
   display:block;
 }
+
+/* ---- Vista previa (para sitios con X-Frame-Options bloqueado) ---- */
+.preview-container{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px 28px 28px;
+  min-height:0;
+}
+.preview-card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:20px;
+  display:flex;
+  overflow:hidden;
+  width:100%;
+  max-width:780px;
+  min-height:300px;
+}
+.preview-visual{
+  width:260px;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+.preview-lofi{background:linear-gradient(135deg,#1a0d1a 0%,#1a0f20 50%,#0f1a1a 100%)}
+.vinyl-ring{
+  width:120px;height:120px;border-radius:50%;
+  background:conic-gradient(from 0deg,#1a0d1a,#2a1030,#1a0d1a,#2a1030,#1a0d1a);
+  border:3px solid rgba(212,83,126,0.4);
+  display:flex;align-items:center;justify-content:center;
+  animation:spinVinyl 6s linear infinite;
+  position:relative;z-index:1;
+}
+@keyframes spinVinyl{to{transform:rotate(360deg)}}
+.vinyl-inner{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--bg3);border:2px solid rgba(212,83,126,0.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;animation:spinVinyl 6s linear infinite reverse;
+}
+.sound-bars{
+  position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:flex-end;gap:4px;height:26px;
+}
+.sound-bars span{
+  width:4px;border-radius:2px;background:rgba(212,83,126,0.7);
+  animation:barBounce 0.8s ease-in-out infinite alternate;
+}
+.sound-bars span:nth-child(1){height:10px;animation-delay:0s}
+.sound-bars span:nth-child(2){height:22px;animation-delay:0.1s}
+.sound-bars span:nth-child(3){height:16px;animation-delay:0.2s}
+.sound-bars span:nth-child(4){height:24px;animation-delay:0.05s}
+.sound-bars span:nth-child(5){height:12px;animation-delay:0.15s}
+@keyframes barBounce{from{transform:scaleY(0.4)}to{transform:scaleY(1)}}
+.preview-store{background:linear-gradient(135deg,#0d1520 0%,#111a28 50%,#0d1a14 100%)}
+.store-shelf{
+  display:flex;align-items:flex-end;gap:10px;
+  padding:0 16px;position:relative;z-index:1;
+}
+.shelf-item{
+  width:44px;height:44px;border-radius:10px;
+  background:var(--bg3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.shelf-item--tall{height:58px;margin-bottom:6px}
+.store-tag{
+  position:absolute;top:16px;right:16px;
+  background:var(--accent3);color:#fff;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:11px;
+  padding:3px 9px;border-radius:20px;letter-spacing:1px;
+}
+.preview-info{
+  flex:1;
+  padding:32px 28px;
+  display:flex;flex-direction:column;
+  justify-content:center;
+  gap:12px;
+  border-left:1px solid var(--border);
+}
+.preview-badge{
+  display:inline-flex;align-items:center;
+  font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;
+  color:var(--text2);background:var(--bg3);
+  border:1px solid var(--border);border-radius:20px;
+  padding:4px 12px;width:fit-content;
+}
+.preview-title{
+  font-family:'Syne',sans-serif;font-weight:700;font-size:21px;
+  letter-spacing:-0.3px;line-height:1.2;
+}
+.preview-desc{font-size:13px;color:var(--text2);line-height:1.65}
+.preview-meta{display:flex;flex-wrap:wrap;gap:8px}
+.meta-chip{
+  font-size:12px;color:var(--text2);
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:20px;padding:4px 12px;
+}
+.preview-notice{
+  display:flex;align-items:flex-start;gap:8px;
+  font-size:12px;color:rgba(212,83,126,0.8);
+  background:rgba(212,83,126,0.07);
+  border:1px solid rgba(212,83,126,0.18);
+  border-radius:10px;padding:10px 14px;line-height:1.5;
+}
+.btn-open-external{
+  display:inline-flex;align-items:center;gap:9px;
+  background:var(--accent4);border:none;border-radius:12px;
+  padding:11px 20px;color:#fff;
+  font-family:'Syne',sans-serif;font-weight:600;font-size:14px;
+  cursor:pointer;transition:opacity 0.15s,transform 0.15s;
+  width:fit-content;
+}
+.btn-open-external:hover{opacity:0.88;transform:translateY(-1px)}
+.btn-open-external:active{transform:translateY(0)}
+.btn-open-blue{background:var(--accent5)}
 </style>
 </head>
 <body>
@@ -460,8 +580,39 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
           </div>
         </div>
       </div>
-      <div class="iframe-wrap">
-        <iframe src="http://dst.rf.gd/?i=1" title="Streaming LO-FI" allowfullscreen allow="autoplay; encrypted-media" loading="lazy"></iframe>
+      <!-- Vista previa — el servidor bloquea embedding con X-Frame-Options -->
+      <div class="preview-container">
+        <div class="preview-card">
+          <div class="preview-visual preview-lofi">
+            <div class="vinyl-ring">
+              <div class="vinyl-inner">🎵</div>
+            </div>
+            <div class="sound-bars">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+          <div class="preview-info">
+            <div class="preview-badge">Streaming · Lo-fi Beats</div>
+            <div class="preview-title">Lo-Fi Music Player</div>
+            <div class="preview-desc">
+              Música ambiental Lo-Fi para concentrarte, estudiar y relajarte.<br>
+              El contenido vive en un servidor externo que no permite incrustarse directamente.
+            </div>
+            <div class="preview-meta">
+              <span class="meta-chip">🎧 Lo-fi Hip Hop</span>
+              <span class="meta-chip">📻 Chillwave</span>
+              <span class="meta-chip">☕ Study Beats</span>
+            </div>
+            <div class="preview-notice">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2"/><path d="M8 7v4M8 5.5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              El servidor de este sitio bloquea la incrustación (X-Frame-Options). Se abrirá en una nueva pestaña.
+            </div>
+            <button class="btn-open-external" onclick="window.open('http://dst.rf.gd/?i=1','_blank')">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M9 2h5v5M14 2L8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Abrir Streaming LO-FI
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -499,8 +650,41 @@ main{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column
           </div>
         </div>
       </div>
-      <div class="iframe-wrap">
-        <iframe src="https://tiendaonlines.free.nf/?i=1" title="Tienda Online" allowfullscreen loading="lazy"></iframe>
+      <!-- Vista previa — el servidor bloquea embedding con X-Frame-Options -->
+      <div class="preview-container">
+        <div class="preview-card">
+          <div class="preview-visual preview-store">
+            <div class="store-shelf">
+              <div class="shelf-item">🎧</div>
+              <div class="shelf-item shelf-item--tall">⌨️</div>
+              <div class="shelf-item">🖱️</div>
+              <div class="shelf-item shelf-item--tall">💡</div>
+              <div class="shelf-item">📱</div>
+            </div>
+            <div class="store-tag">SALE</div>
+          </div>
+          <div class="preview-info">
+            <div class="preview-badge">E-Commerce · Catálogo</div>
+            <div class="preview-title">Tienda Online</div>
+            <div class="preview-desc">
+              Catálogo completo de productos tecnológicos con precios en tiempo real.<br>
+              El contenido vive en un servidor externo que no permite incrustarse directamente.
+            </div>
+            <div class="preview-meta">
+              <span class="meta-chip">🎧 Audio</span>
+              <span class="meta-chip">💻 Periféricos</span>
+              <span class="meta-chip">📦 Envío gratis</span>
+            </div>
+            <div class="preview-notice">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2"/><path d="M8 7v4M8 5.5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              El servidor de este sitio bloquea la incrustación (X-Frame-Options). Se abrirá en una nueva pestaña.
+            </div>
+            <button class="btn-open-external btn-open-blue" onclick="window.open('https://tiendaonlines.free.nf/?i=1','_blank')">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M6 3H3a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1v-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M9 2h5v5M14 2L8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Abrir Tienda Online
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
